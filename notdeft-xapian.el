@@ -179,6 +179,41 @@ non-directory filename, all descending, based on the
 	     (split-string s "\n" t))))
       files)))
 
+(defvar notdeft-xapian-install-buffer-name " *Install notdeft-xapian"
+  "Name of the buffer used for compiling notdeft-xapian.")
+
+(defvar notdeft-directory-path
+  (shell-quote-argument (file-name-directory (file-truename (locate-library "notdeft"))))
+  "Directory path for notdeft.")
+
+(defvar notdeft-xapian-executeable-path
+  (shell-quote-argument (concat notdeft-directory-path "xapian/notdeft-xapian"))
+  "Path for the notdeft-xapian executeable.")
+
+(defvar notdeft-disable-notdeft-xapian-compilation nil
+  "Disables the compilation of notdeft-xapian, when the notdeft-xapian
+  executeable does not exist and notdeft is loaded.")
+
+(defun notdeft-make-notdeft-xapian ()
+  "This function compiles the notdeft-xapian application."
+  (interactive)
+  (let* ((change-dir (concat "cd " notdeft-directory-path "xapian;"))
+         (make-commands (concat change-dir "make")))
+    (unless (file-executable-p notdeft-xapian-executeable-path)
+      (let* ((buffer (get-buffer-create notdeft-xapian-install-buffer-name)))
+        (pop-to-buffer notdeft-xapian-install-buffer-name)
+        (if (zerop (call-process "sh" nil buffer t "-c" make-commands))
+            (message "Compilation of `notdeft-xapian' succeeded!")
+          (error "Compilation of `notdeft-xapian' failed!"))))))
+
+(defun notdeft-make-notdeft-xapian-when-not-found ()
+  "Run `notdeft-make-notdeft-xapian', when the notdeft-xapian executable does not exist."
+  (if (and (not (file-exists-p notdeft-xapian-executeable-path))
+           (not notdeft-disable-notdeft-xapian-compilation))
+      (notdeft-make-notdeft-xapian)))
+
+(add-hook 'notdeft-load-hook 'notdeft-make-notdeft-xapian-when-not-found)
+
 (provide 'notdeft-xapian)
 
 ;;; notdeft-xapian.el ends here
