@@ -1911,7 +1911,10 @@ deleted file's buffer, if any."
 	(when (y-or-n-p
 	       (concat "Delete file " old-file-nd "? "))
 	  (when (file-exists-p old-file)
-	    (delete-file old-file))
+	    
+	    ;; ~C-c C-d~: trash the file to a reycle bin (instead of deleting it outright) by adding the optional argument  "t"
+	    (delete-file old-file t))
+	  
 	  (delq old-file notdeft-current-files)
 	  (delq old-file notdeft-all-files)
 	  (notdeft-changed--fs 'files (list old-file))
