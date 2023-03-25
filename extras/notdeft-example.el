@@ -46,7 +46,7 @@ Enable when the buffer local variable
   "Add `notdeft-note-mode-auto-enable' flag.
 Add it for all `notdeft-directories'."
   (interactive)
-  (require 'notdeft) ;; for `notdeft-directories'
+  (require 'notdeft-base) ;; for `notdeft-directories'
   (dolist (dir notdeft-directories)
     (make-directory dir t)
     (let ((default-directory dir))
@@ -57,9 +57,8 @@ Add it for all `notdeft-directories'."
   (lambda ()
     (let ((ver (ignore-errors
 		 (car (version-to-list org-version)))))
-      (require (if (and ver (< ver 9))
-		   'notdeft-org8
-		 'notdeft-org9)))))
+      (when (and ver (>= ver 9))
+        (require 'notdeft-org9)))))
 
 ;; Add global bindings for NotDeft. To do that, bind a custom keymap
 ;; that inherits from NotDeft's, one that we can use to override and

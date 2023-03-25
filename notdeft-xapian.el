@@ -1,20 +1,21 @@
 ;;; notdeft-xapian.el --- Xapian backend for NotDeft  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 by the author.
-;; All rights reserved.
 ;; Author: Tero Hasu <tero@hasu.is>
-;; See "notdeft.el" for licensing information.
+;; See end of file for licensing information.
 
 ;;; Commentary:
 ;; Xapian-specific functionality for NotDeft.
+
+(require 'cl-lib)
+(require 'notdeft-base)
+(require 'notdeft-util)
 
 ;;; Code:
 
 (defcustom notdeft-xapian-program nil
   "Xapian backend's executable program path.
-Specified as an absolute path. When nil, the Xapian backend is
-disabled, and filtering does not concern search results, but all
-notes in `notdeft-directories'."
+Specified as an absolute path. Must be set appropriately for the
+`notdeft-xapian' feature to be usable."
   :type '(choice (const :tag "None" nil)
 		 (file :tag "Path"))
   :safe #'string-or-null-p
@@ -76,26 +77,7 @@ Not cleared between invocations of `notdeft-mode'.")
 Use and update `notdeft-xapian-query-history' in querying.
 Optionally fill in the specified INITIAL input. Return the read
 string, or nil if no query is given."
-  (let* ((hist (if (not initial)
-		   'notdeft-xapian-query-history
-		 (setq notdeft-xapian-query-history
-		       (cons initial
-			     notdeft-xapian-query-history))
-		 '(notdeft-xapian-query-history . 1)))
-	 (s (read-from-minibuffer
-	    "Query: " ;; PROMPT
-	    initial nil nil ;; INITIAL-CONTENTS KEYMAP READ
-	    hist ;; HIST
-	    nil ;; DEFAULT-VALUE
-	    t ;; INHERIT-INPUT-METHOD
-	    )))
-    (when (and s (not (string= s "")))
-      s)))
-
-(eval-when-compile
-  (defvar notdeft-extension)
-  (defvar notdeft-secondary-extensions)
-  (defvar notdeft-allow-org-property-drawers))
+  (notdeft-read-query 'notdeft-xapian-query-history initial))
 
 (defun notdeft-xapian-index-dirs (dirs &optional recreate)
   "Create or update a Xapian index for DIRS.
@@ -212,3 +194,19 @@ as word characters. The default is `keywords'."
 (provide 'notdeft-xapian)
 
 ;;; notdeft-xapian.el ends here
+
+;; NotDeft, a note manager for Emacs
+;; Copyright (C) 2017-2022  Tero Hasu
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.

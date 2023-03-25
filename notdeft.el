@@ -1,18 +1,36 @@
 ;;; notdeft.el --- Note manager and search engine  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011 Jason R. Blevins <jrblevin@sdf.org>
-;; Copyright (C) 2011-2020 Tero Hasu <tero@hasu.is>
-;; All rights reserved.
-
 ;; Author: Tero Hasu <tero@hasu.is>
 ;;	Jason R. Blevins <jrblevin@sdf.org>
 ;; Maintainer: Tero Hasu <tero@hasu.is>
 ;; Homepage: https://tero.hasu.is/notdeft/
 ;; Keywords: files text notes search
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.3") (org "9.3"))
 
 ;; This file is not part of GNU Emacs.
 
+;; NotDeft, a note manager for Emacs
+;; Copyright (C) 2011-2023  Tero Hasu
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;; This file incorporates work covered by the following copyright and
+;; permission notice:
+;;
+;; Copyright (C) 2011 Jason R. Blevins <jrblevin@sdf.org>
+;; All rights reserved.
+;;
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions
 ;; are met:
@@ -25,7 +43,7 @@
 ;; 3. Neither the names of the copyright holders nor the names of any
 ;;    contributors may be used to endorse or promote products derived
 ;;    from this software without specific prior written permission.
-
+;;
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 ;; "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 ;; LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -46,8 +64,7 @@
 ;; increased productivity when writing and taking notes by making it
 ;; fast to find the right file at the right time.
 
-;; NotDeft is open source software and may be freely distributed and
-;; modified under the BSD license.  This version is a fork of
+;; NotDeft is open source software.  This version is a fork of
 ;; Deft version 0.3, which was released on September 11, 2011.
 
 ;; File Browser
@@ -217,7 +234,7 @@
 
 ;;; History:
 
-;; NotDeft:
+;; NotDeft (2017-12-05):
 
 ;; * Most notably, add a Xapian-based query engine.
 ;; * Add support for multiple notes directories.
@@ -235,48 +252,15 @@
 ;; Deft was originally written by Jason Blevins.
 ;; The initial version, 0.1, was released on August 6, 2011.
 
-;;; Code:
-
 (require 'cl-lib)
+(require 'notdeft-base)
+(require 'notdeft-util)
 (require 'widget)
 (require 'wid-edit)
 
+;;; Code:
+
 ;; Customization
-
-;;;###autoload
-(defgroup notdeft nil
-  "Emacs NotDeft mode."
-  :group 'local)
-
-(defcustom notdeft-directories '("~/.deft/")
-  "NotDeft directories.
-Each element must be a directory path string.
-Each named directory may or may not exist."
-  :type '(repeat string)
-  :safe (lambda (lst) (cl-every 'stringp lst))
-  :group 'notdeft)
-
-(defcustom notdeft-directory nil
-  "Default or previously selected NotDeft data directory.
-One of the `notdeft-directories', or nil if none. The value may
-be modified locally for each NotDeft mode buffer. The global
-default is customizable."
-  :type '(choice (string :tag "Default directory")
-		 (const :tag "None" nil))
-  :safe #'string-or-null-p
-  :group 'notdeft)
-
-(defcustom notdeft-extension "org"
-  "Default NotDeft file extension."
-  :type 'string
-  :safe #'stringp
-  :group 'notdeft)
-
-(defcustom notdeft-secondary-extensions nil
-  "Additional NotDeft file extensions."
-  :type '(repeat string)
-  :safe (lambda (lst) (cl-every 'stringp lst))
-  :group 'notdeft)
 
 (defcustom notdeft-sparse-directories nil
   "Directories indexed only for specified files.
@@ -326,15 +310,6 @@ have no file information displayed."
   :type '(choice (function :tag "Formatting function")
 		 (const :tag "Hide" nil))
   :safe #'null
-  :group 'notdeft)
-
-(defcustom notdeft-allow-org-property-drawers t
-  "Whether to recognize Org property drawers.
-If non-nil, then buffer-level Org \"PROPERTIES\" drawers are
-treated as being part of the header of the note, which in
-practice means that they are treated the same as comments."
-  :type 'boolean
-  :safe #'booleanp
   :group 'notdeft)
 
 (defcustom notdeft-open-query-in-new-buffer nil
@@ -771,7 +746,7 @@ attempting to construct a unique name."
 (defun notdeft-strip-extension (file)
   "Strip any NotDeft filename extension from FILE."
   (replace-regexp-in-string (notdeft-make-file-re) "" file))
-  
+
 (defun notdeft-base-filename (file)
   "Strip the leading path and NotDeft extension from filename FILE.
 Use `file-name-directory' to get the directory component.
@@ -854,21 +829,6 @@ Return nil on failure."
     (let* ((contents (notdeft-read-file file))
 	   (title (notdeft-parse-title contents)))
       title)))
-
-(defun notdeft-chomp (str)
-  "Trim leading and trailing whitespace from STR."
-  (replace-regexp-in-string
-   "\\(\\`[[:space:]\n\r]+\\|[[:space:]\n\r]+\\'\\)"
-   "" str))
-
-;;;###autoload
-(defun notdeft-chomp-nullify (str &optional trim)
-  "Return string STR if non-empty, otherwise return nil.
-Optionally, use function TRIM to trim any result string."
-  (when str
-    (let ((str (notdeft-chomp str)))
-      (unless (string= "" str)
-	(if trim (funcall trim str) str)))))
 
 (defvar notdeft-directory-files-regexp "^[^._#/][^/]*$"
   "A match regexp for `directory-files'.
@@ -1203,7 +1163,7 @@ Keep any information for a non-existing file."
 	   "No files found.\n"))))
 
     (widget-setup)
-    
+
     (goto-char (point-min))
     (forward-line (1- line))))
 
@@ -1603,7 +1563,7 @@ changes to its note buffers."
   (if notdeft-note-mode
       (notdeft-register-buffer)
     (notdeft-deregister-buffer)))
-  
+
 (defun notdeft-refresh-after-save ()
   "Refresh global NotDeft state after saving a NotDeft note."
   (let ((file (buffer-file-name)))
@@ -1698,7 +1658,7 @@ The list of choices is determined by the function
       (let* ((names (mapcar #'buffer-name buffers))
 	     (name (ido-completing-read "Buffer: " names nil t)))
 	(switch-to-buffer name))))))
-		     
+
 ;;;###autoload
 (defun notdeft-find-file (file)
   "Edit NotDeft note FILE.

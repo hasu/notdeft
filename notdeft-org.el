@@ -1,18 +1,16 @@
 ;;; notdeft-org.el --- some support for Org format NotDeft notes  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017-2020 by the author.
-;; All rights reserved.
 ;; Author: Tero Hasu <tero@hasu.is>
-;; See "notdeft.el" for licensing information.
+;; See end of file for licensing information.
 
 ;;; Commentary:
 ;; Some NotDeft-specific support for `org-mode'. For Org mode version
-;; 8 and higher.
+;; 9 and higher.
 ;;
 ;; This feature requires no specific setup, as the public commands and
 ;; functions of this feature are autoloadable. However, see also
-;; `notdeft-org8' and `notdeft-org9', which are optional extensions to
-;; this feature, and do require setting up for use.
+;; `notdeft-org9', which is an optional extension to this feature, and
+;; does require setting up for use.
 
 ;;; Code:
 
@@ -56,8 +54,7 @@ The optional PREFIX argument is ignored."
 
 (defvar notdeft-describe-link 'notdeft-title-from-file-content
   "Function to determine NotDeft note file link description.
-The function is given the file name as its sole argument.
-Used by `notdeft-select-make-org-link'.")
+The function is given the file name as its sole argument.")
 
 (defun notdeft-org-read-link-description (&optional desc)
   "Read a link description, interactively.
@@ -69,7 +66,7 @@ string, or nil if no non-whitespace description was provided."
 (defun notdeft-make-deft-link (name &optional desc)
   "Turn NAME and DESC into a \"deft:\" link.
 NAME should be a non-directory file name with extension."
-  (org-make-link-string (concat "deft:" name) desc))
+  (org-link-make-string (concat "deft:" name) desc))
 
 ;;;###autoload
 (defun notdeft-org-store-deft-link ()
@@ -199,7 +196,7 @@ buffer. Return nil if not in `notdeft-mode', or if there is no
 current query."
   (when (and (eq major-mode 'notdeft-mode)
 	     notdeft-xapian-query)
-    (org-store-link-props
+    (org-link-store-props
      :type "notdeft"
      :link (concat "notdeft:" notdeft-xapian-query))))
 
@@ -225,3 +222,19 @@ interpreted in the `notdeft-open-query' sense."
 (provide 'notdeft-org)
 
 ;;; notdeft-org.el ends here
+
+;; NotDeft, a note manager for Emacs
+;; Copyright (C) 2017-2020  Tero Hasu
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.

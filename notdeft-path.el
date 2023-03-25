@@ -1,9 +1,7 @@
 ;;; notdeft-path.el --- NotDeft directory dynamic resolution  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2018 by the author.
-;; All rights reserved.
 ;; Author: Tero Hasu <tero@hasu.is>
-;; See "notdeft.el" for licensing information.
+;; See end of file for licensing information.
 
 ;;; Commentary:
 ;; A system for resolving `notdeft-directories' dynamically, based on
@@ -19,9 +17,10 @@
 ;;  (notdeft-refresh-directories)
 ;;  (add-hook 'notdeft-pre-refresh-hook 'notdeft-refresh-directories)
 
-;;; Code:
-
 (require 'cl-lib)
+(require 'notdeft-base)
+
+;;; Code:
 
 (defcustom notdeft-path '("~/.deft/")
   "NotDeft directory search path.
@@ -56,10 +55,6 @@ directory names, and name existing directories."
 	(error "Expected a string: %S" elem)))
     (notdeft-existing-directories lst)))
 
-(eval-when-compile
-  (defvar notdeft-directories)
-  (defvar notdeft-directory))
-
 (defun notdeft-refresh-directories ()
   "Update `notdeft-directories' based on `notdeft-path'.
 Only include existing directories. Also clear `notdeft-directory'
@@ -77,3 +72,19 @@ if it is no longer one of the `notdeft-directories'."
 (provide 'notdeft-path)
 
 ;;; notdeft-path.el ends here
+
+;; NotDeft, a note manager for Emacs
+;; Copyright (C) 2018-2022  Tero Hasu
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.

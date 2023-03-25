@@ -1,9 +1,7 @@
 ;;; notdeft-ivy.el --- Ivy completion for NotDeft  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020 by the author.
-;; All rights reserved.
 ;; Author: Tero Hasu <tero@hasu.is>
-;; See "notdeft.el" for licensing information.
+;; See end of file for licensing information.
 
 ;;; Commentary:
 ;; An Ivy-based implementation of `notdeft-completing-read-function'.
@@ -41,3 +39,19 @@ specified PROMPT. Return the path of the selected file."
 (provide 'notdeft-ivy)
 
 ;;; notdeft-ivy.el ends here
+
+;; NotDeft, a note manager for Emacs
+;; Copyright (C) 2020  Tero Hasu
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
