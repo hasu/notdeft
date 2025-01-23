@@ -24,6 +24,7 @@
 	       (locate-library "notdeft-install"))))
     (let ((generated-autoload-file
 	   (expand-file-name "notdeft-autoloads.el" home)))
+      ;; From Emacs 28.1 should instead use `make-directory-autoloads'.
       (update-directory-autoloads home))
     (load "notdeft-autoloads.el" nil nil t)))
 
@@ -33,8 +34,7 @@ Optionally FORCE byte-compilation even when existing bytecode
 files appear to be up-to-date."
   (let ((dir (file-name-directory
 	      (locate-library "notdeft-install"))))
-    (notdeft-install--byte-compile dir "./" t force)
-    (notdeft-install--byte-compile dir "extras/" nil force)))
+    (notdeft-install--byte-compile dir "./" t force)))
 
 (defun notdeft-install--byte-compile (dir subdir must force)
   "Byte-compile NotDeft sources in DIR SUBDIR.
@@ -44,8 +44,7 @@ compilation."
     (when (or must (file-exists-p home))
       (let ((files (directory-files home nil "^notdeft.*\\.el$")))
 	(dolist (file files)
-	  (unless (member file '("notdeft-autoloads.el"
-				 "notdeft-example.el"))
+	  (unless (member file '("notdeft-autoloads.el"))
 	    (let ((file (concat home file)))
 	      (byte-recompile-file file force 0))))))))
 
