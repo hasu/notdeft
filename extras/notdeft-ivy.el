@@ -1,13 +1,13 @@
 ;;; notdeft-ivy.el --- Ivy completion for NotDeft  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
+;; Package-Requires: (ivy)
 ;; See end of file for licensing information.
 
 ;;; Commentary:
 ;; An Ivy-based implementation of `notdeft-completing-read-function'.
 ;;
 ;; Suggested use:
-;;  (require 'notdeft-ivy)
 ;;  (add-to-list 'ivy-re-builders-alist '(notdeft-ivy-completing-read . ivy--regex-ignore-order))
 ;;  (setq notdeft-completing-read-function 'notdeft-ivy-completing-read)
 
@@ -15,6 +15,7 @@
 
 (require 'ivy)
 
+;;;###autoload
 (defun notdeft-ivy-completing-read (files &optional prompt)
   "Present a choice of FILES with `ivy-read'.
 Only present the non-directory component of each file. There may
