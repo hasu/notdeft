@@ -15,6 +15,13 @@
 
 (require 'org)
 
+;; These are autoloadable, but declare them for byte-compilation as we
+;; are avoiding requiring `notdeft-org' (and `notdeft') here.
+(declare-function notdeft-org-open-deft-link "notdeft-org")
+(declare-function notdeft-org-complete-deft-link "notdeft-org")
+(declare-function notdeft-org-open-notdeft-link "notdeft-org")
+(declare-function notdeft-org-store-notdeft-link "notdeft-org")
+
 (org-link-set-parameters
  "deft"
  :follow #'notdeft-org-open-deft-link
