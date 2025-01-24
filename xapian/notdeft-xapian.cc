@@ -689,7 +689,7 @@ static int doIndex(vector<string> subArgs) {
   return 0;
 }
 
-static int doSearch(vector<string> subArgs) {
+static void doSearch(vector<string> subArgs) {
   TCLAP::CmdLine cmdLine("Specify a query expression as a string.");
   TCLAP::ValueArg<string>
     langArg("l", "lang", "stemming language (e.g., 'en' or 'fi')",
@@ -730,7 +730,7 @@ static int doSearch(vector<string> subArgs) {
   string lang(langArg.getValue());
   bool cjk = drop_substring(lang, ":cjk");
 
-  try {
+  {
     Xapian::Database db;
     auto dirs = dirsArg.getValue();
     int numDbFiles = 0;
@@ -744,7 +744,7 @@ static int doSearch(vector<string> subArgs) {
       }
     }
     if (numDbFiles == 0)
-      return 0;
+      return;
     
     Xapian::Enquire enquire(db);
     if (nameSort) // by filename, descending
@@ -784,11 +784,7 @@ static int doSearch(vector<string> subArgs) {
     for (Xapian::MSetIterator i = matches.begin(); i != matches.end(); ++i) {
       cout << i.get_document().get_data() << endl;
     }
-  } catch (const Xapian::Error& e) {
-    cerr << e.get_description() << endl;
-    return 1;
   }
-  return 0;
 }
 
 int main(int argc, const char* argv[])
@@ -803,18 +799,27 @@ int main(int argc, const char* argv[])
   for (int i = 2; i < argc; i++)
     args.emplace_back(argv[i]);
   // for (auto s : args) cout << s << endl;
-  
-  if (cmd == "index") {
-    return doIndex(args);
-  } else if (cmd == "search") {
-    return doSearch(args);
-  } else if (cmd == "-h" || cmd == "--help") {
-    usage();
-    return 0;
-  } else {
-    usage();
+
+  try {
+    if (cmd == "index") {
+      return doIndex(args);
+    } else if (cmd == "search") {
+      doSearch(args);
+    } else if (cmd == "-h" || cmd == "--help") {
+      usage();
+    } else {
+      usage();
+      return 1;
+    }
+  } catch (const Xapian::Error& e) {
+    cerr << e.get_description() << endl;
+    return 1;
+  } catch (const NotDeft::Error& e) {
+    cerr << e.get_description() << endl;
     return 1;
   }
+
+  return 0;
 }
 
 /*
