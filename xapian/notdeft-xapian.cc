@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <string.h>
 #include <sys/stat.h>
@@ -27,6 +28,7 @@
 using std::cerr;
 using std::cout;
 using std::endl;
+using std::function;
 using std::map;
 using std::pair;
 using std::string;
@@ -39,7 +41,7 @@ namespace NotDeft {
     int sys_errno;
 
     string get_description() const {
-      return string(type) 
+      return string(type)
 	+ (msg.empty() ? "" : (": " + msg))
 	+ (sys_errno ? (string(strerror(sys_errno)) + "(errno=" + std::to_string(sys_errno) + ")") : "");
     }
@@ -50,12 +52,12 @@ namespace NotDeft {
   };
 
   struct ReadError : public Error {
-    ReadError(const string msg = string()) 
+    ReadError(const string msg = string())
       : Error("NotDeft::ReadError", msg) {}
   };
 
   struct IoError : public Error {
-    IoError(const string msg, int errno_) 
+    IoError(const string msg, int errno_)
       : Error("NotDeft::IoError", msg, errno_) {}
   };
 }
@@ -374,18 +376,6 @@ static bool parse_ops(std::istream& in, vector<Op>& lst) {
   return true;
 }
 
-static void usage()
-{
-  cerr << "notdeft-xapian" << endl;
-  cerr << "USAGE:" << endl;
-  cerr << "To build/refresh search indices" << endl;
-  cerr << "(for specified directories):" << endl;
-  cerr << "  notdeft-xapian index [options] directory..." << endl;
-  cerr << "To find text documents" << endl;
-  cerr << "(matching the specified query):" << endl;
-  cerr << "  notdeft-xapian search [options] directory..." << endl;
-}
-
 static constexpr Xapian::valueno DOC_MTIME = 0;
 static constexpr Xapian::valueno DOC_FILENAME = 1;
 
@@ -437,7 +427,7 @@ static void doIndex(vector<string> subArgs) {
 	("could not change into directory " + chdirArg.getValue(), e);
     }
   }
-  
+
   vector<string> exts = extArg.getValue();
   if (exts.empty())
     exts.push_back(".org");
@@ -446,7 +436,7 @@ static void doIndex(vector<string> subArgs) {
 
   string lang(langArg.getValue());
   bool cjk = drop_substring(lang, ":cjk");
-  
+
   vector<Op> opList;
   {
     auto dirs = dirsArg.getValue();
@@ -477,7 +467,7 @@ static void doIndex(vector<string> subArgs) {
       throw NotDeft::ReadError(msg);
     }
   }
-  
+
   {
     Xapian::TermGenerator indexer;
     Xapian::Stem stemmer(lang);
@@ -485,10 +475,10 @@ static void doIndex(vector<string> subArgs) {
     indexer.set_stemming_strategy(Xapian::TermGenerator::STEM_SOME);
     if (cjk)
       indexer.set_flags(TG_CJK);
-    
+
     for (auto op : opList) {
       auto dir = op.dir;
-      
+
       struct stat sb;
       // Whether a readable and writable directory.
       if ((stat(dir.c_str(), &sb) == 0) && S_ISDIR(sb.st_mode) &&
@@ -496,7 +486,7 @@ static void doIndex(vector<string> subArgs) {
 	if (verbose) {
 	  cerr << "indexing directory " << dir << endl;
 	}
-	
+
 	string dbFile(file_join(dir, ".notdeft-db"));
 	Xapian::WritableDatabase db(dbFile,
 				    resetArg.getValue() ?
@@ -506,7 +496,7 @@ static void doIndex(vector<string> subArgs) {
 	map<string, int64_t> fsFiles; // mtimes for files in file system
 	map<string, int64_t> dbFiles; // mtimes for files in database
 	map<string, Xapian::docid> dbIds;
-	
+
 	vector<string> orgFiles;
 	if (op.whole_dir) {
 	  ls_org(orgFiles, dir, ".", exts);
@@ -522,9 +512,9 @@ static void doIndex(vector<string> subArgs) {
 	    fsFiles[filePath] = sb.st_mtime;
 	  }
 	}
-	
+
 	db.begin_transaction(false);
-	
+
 	for (Xapian::PostingIterator it = db.postlist_begin("");
 	     it != db.postlist_end(""); ++it) {
 	  auto docId = *it;
@@ -558,7 +548,7 @@ static void doIndex(vector<string> subArgs) {
 	    }
 	    {
 	      /* As for Omega, lowercase, without dot, and just "E"
-		 for the no extension case. */ 
+		 for the no extension case. */
 	      string fileExt = file_extension(fileNonDir);
 	      if (!fileExt.empty()) {
 		fileExt = downcase(fileExt.substr(1));
@@ -642,14 +632,14 @@ static void doIndex(vector<string> subArgs) {
 	      db.delete_document(docId);
 	    }
 	  };
-	  
+
 	  auto rmFile = [&] (const pair<string, int64_t>& x) {
 	    if (verbose)
 	      cerr << "de-indexing file " << x.first << endl;
 	    auto docId = dbIds[x.first];
 	    db.delete_document(docId);
 	  };
-	  
+
 	  auto fi = fsFiles.cbegin();
 	  auto di = dbFiles.cbegin();
 	  for (;;) {
@@ -685,11 +675,30 @@ static void doIndex(vector<string> subArgs) {
 	    }
 	  } // end `for`
 	}
-	
+
 	db.commit_transaction();
       }
     }
   }
+}
+
+static void execute_with_db(const vector<string>& dir_list,
+			    function<void(Xapian::Database&)> action) {
+  Xapian::Database db;
+  int numDbFiles = 0;
+  for (auto dir : dir_list) {
+    string dbFile(file_join(dir, ".notdeft-db"));
+    if (access(dbFile.c_str(), R_OK) != -1) {
+      Xapian::Database dirDb(dbFile);
+      db.add_database(dirDb);
+      numDbFiles++;
+      //cout << "Added database: " << db.get_description() << endl;
+    }
+  }
+  if (numDbFiles == 0)
+    return;
+
+  action(db);
 }
 
 static void doSearch(vector<string> subArgs) {
@@ -724,31 +733,16 @@ static void doSearch(vector<string> subArgs) {
     dirsArg("dir...", "specifies directories to search", false, "directory");
   cmdLine.add(dirsArg);
   cmdLine.parse(subArgs);
-  
+
   auto maxDocCount = countArg.getValue();
   bool nameSort = nameArg.getValue();
   bool timeSort = timeArg.getValue();
   auto verbose = verboseArg.getValue();
-  
+
   string lang(langArg.getValue());
   bool cjk = drop_substring(lang, ":cjk");
 
-  {
-    Xapian::Database db;
-    auto dirs = dirsArg.getValue();
-    int numDbFiles = 0;
-    for (auto dir : dirs) {
-      string dbFile(file_join(dir, ".notdeft-db"));
-      if (access(dbFile.c_str(), R_OK) != -1) {
-	Xapian::Database dirDb(dbFile);
-	db.add_database(dirDb);
-	numDbFiles++;
-	//cout << "Added database: " << db.get_description() << endl;
-      }
-    }
-    if (numDbFiles == 0)
-      return;
-    
+  execute_with_db(dirsArg.getValue(), [&] (Xapian::Database& db) {
     Xapian::Enquire enquire(db);
     if (nameSort) // by filename, descending
       enquire.set_sort_by_value(DOC_FILENAME, true);
@@ -784,10 +778,60 @@ static void doSearch(vector<string> subArgs) {
 
     int maxItems = (maxDocCount ? maxDocCount : db.get_doccount());
     Xapian::MSet matches = enquire.get_mset(0, maxItems);
-    for (Xapian::MSetIterator i = matches.begin(); i != matches.end(); ++i) {
-      cout << i.get_document().get_data() << endl;
+    for (Xapian::MSetIterator it = matches.begin(), end = matches.end(); it != end; ++it) {
+      cout << it.get_document().get_data() << endl;
     }
+  });
+}
+
+static void write_string_literal(std::ostream& out, const string& s) {
+  auto len = s.size();
+  out << '"';
+  for (decltype(len) i = 0; i < len; i++) {
+    auto ch = s[i];
+    if (ch == '"' || ch == '\\') {
+      out << '\\';
+    }
+    out << ch;
   }
+  out << '"';
+}
+
+static void doList(vector<string> subArgs) {
+  TCLAP::CmdLine cmdLine
+    ("Lists keyword words from the database index."
+     " Writes them out as a UTF-8 encoded list S-expression containing quoted strings,"
+     " intended to be `read'able from Emacs Lisp."
+     " Specify all database directories whose indexes are to be inspected.");
+  TCLAP::UnlabeledMultiArg<string>
+    dirsArg("dir...", "specifies directories to include", false, "directory");
+  cmdLine.add(dirsArg);
+  cmdLine.parse(subArgs);
+
+  execute_with_db(dirsArg.getValue(), [&] (Xapian::Database& db) {
+    const string prefix("K");
+    cout << "(" << endl;
+    for (Xapian::TermIterator it = db.allterms_begin(prefix), end = db.allterms_end(prefix);
+	 it != db.allterms_end(prefix); ++it) {
+      write_string_literal(cout, (*it).substr(1));
+      cout << endl;
+    }
+    cout << ")" << endl;
+  });
+}
+
+static void usage() {
+  cerr << "notdeft-xapian" << endl;
+  cerr << "USAGE:" << endl;
+  cerr << "To build/refresh search indices" << endl;
+  cerr << "(for specified directories):" << endl;
+  cerr << "  notdeft-xapian index [options] directory..." << endl;
+  cerr << "To find text documents" << endl;
+  cerr << "(matching the specified query):" << endl;
+  cerr << "  notdeft-xapian search [options] directory..." << endl;
+  cerr << "To list keyword words" << endl;
+  cerr << "(from search indexes in specified directories):" << endl;
+  cerr << "  notdeft-xapian list [options] directory..." << endl;
 }
 
 int main(int argc, const char* argv[])
@@ -808,6 +852,8 @@ int main(int argc, const char* argv[])
       doIndex(args);
     } else if (cmd == "search") {
       doSearch(args);
+    } else if (cmd == "list") {
+      doList(args);
     } else if (cmd == "-h" || cmd == "--help") {
       usage();
     } else {
