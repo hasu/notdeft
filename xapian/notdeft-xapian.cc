@@ -33,7 +33,23 @@ using std::string;
 using std::vector;
 
 namespace NotDeft {
-  struct ReadError {};
+  struct Error {
+    const char* type;
+    string msg;
+
+    string get_description() const {
+      return string(type) + (msg.empty() ? "" : (": " + msg));
+    }
+
+  protected:
+    Error(const char* type, const string msg = string())
+      : type(type), msg(msg) {}
+  };
+
+  struct ReadError : public Error {
+    ReadError(const string msg = string()) 
+      : Error("NotDeft::ReadError", msg) {}
+  };
 }
 
 /** Serializes in a sorting friendly way, similarly to
