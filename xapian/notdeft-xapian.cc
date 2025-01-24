@@ -36,19 +36,27 @@ namespace NotDeft {
   struct Error {
     const char* type;
     string msg;
+    int sys_errno;
 
     string get_description() const {
-      return string(type) + (msg.empty() ? "" : (": " + msg));
+      return string(type) 
+	+ (msg.empty() ? "" : (": " + msg))
+	+ (sys_errno ? (string(strerror(sys_errno)) + "(errno=" + std::to_string(sys_errno) + ")") : "");
     }
 
   protected:
-    Error(const char* type, const string msg = string())
-      : type(type), msg(msg) {}
+    Error(const char* type, const string msg = string(), int errno_ = 0)
+      : type(type), msg(msg), sys_errno(errno_) {}
   };
 
   struct ReadError : public Error {
     ReadError(const string msg = string()) 
       : Error("NotDeft::ReadError", msg) {}
+  };
+
+  struct IoError : public Error {
+    IoError(const string msg, int errno_) 
+      : Error("NotDeft::IoError", msg, errno_) {}
   };
 }
 
@@ -381,7 +389,7 @@ static void usage()
 static constexpr Xapian::valueno DOC_MTIME = 0;
 static constexpr Xapian::valueno DOC_FILENAME = 1;
 
-static int doIndex(vector<string> subArgs) {
+static void doIndex(vector<string> subArgs) {
   TCLAP::CmdLine cmdLine
     ("Specify any indexing commands via STDIN."
      " For each command, specify its database index directory."
@@ -425,9 +433,8 @@ static int doIndex(vector<string> subArgs) {
   if (chdirArg.getValue() != ".") {
     if (chdir(chdirArg.getValue().c_str()) == -1) {
       auto e = errno;
-      cerr << "could not change into directory " <<
-	chdirArg.getValue() << " (errno: " << e << ")" << endl;
-      return 1;
+      throw NotDeft::IoError
+	("could not change into directory " + chdirArg.getValue(), e);
     }
   }
   
@@ -449,9 +456,10 @@ static int doIndex(vector<string> subArgs) {
   }
   if (inputArg.getValue()) {
     if (!parse_ops(std::cin, opList)) {
-      cerr << "option -i / --input given, "
-	"but failed to parse instructions from STDIN" << endl;
+      string msg
+	("option -i / --input given, but failed to parse instructions from STDIN");
       if (verbose) { // print out parsed instructions
+	cerr << msg << endl;
 	cerr << "successfully parsed:" << endl;
 	std::ostream& out(cerr);
 	for (auto op : opList) {
@@ -466,11 +474,11 @@ static int doIndex(vector<string> subArgs) {
 	  }
 	}
       }
-      return 1;
+      throw NotDeft::ReadError(msg);
     }
   }
   
-  try {
+  {
     Xapian::TermGenerator indexer;
     Xapian::Stem stemmer(lang);
     indexer.set_stemmer(stemmer);
@@ -681,12 +689,7 @@ static int doIndex(vector<string> subArgs) {
 	db.commit_transaction();
       }
     }
-  } catch (const Xapian::Error& e) {
-    cerr << e.get_description() << endl;
-    return 1;
   }
-
-  return 0;
 }
 
 static void doSearch(vector<string> subArgs) {
@@ -802,7 +805,7 @@ int main(int argc, const char* argv[])
 
   try {
     if (cmd == "index") {
-      return doIndex(args);
+      doIndex(args);
     } else if (cmd == "search") {
       doSearch(args);
     } else if (cmd == "-h" || cmd == "--help") {
