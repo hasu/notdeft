@@ -24,7 +24,13 @@
 #define QP_CJK (0)
 #endif
 
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::map;
+using std::pair;
+using std::string;
+using std::vector;
 
 namespace NotDeft {
   struct ReadError {};
@@ -294,7 +300,7 @@ struct Op {
   explicit Op(const string& d) : whole_dir(true), dir(d) {}
 };
 
-static bool parse_ops(istream& in, vector<Op>& lst) {
+static bool parse_ops(std::istream& in, vector<Op>& lst) {
   string opcode;
   while (getline(in, opcode)) {
     if (opcode == ":idir") {
@@ -413,12 +419,12 @@ static int doIndex(vector<string> subArgs) {
     }
   }
   if (inputArg.getValue()) {
-    if (!parse_ops(cin, opList)) {
+    if (!parse_ops(std::cin, opList)) {
       cerr << "option -i / --input given, "
 	"but failed to parse instructions from STDIN" << endl;
       if (verbose) { // print out parsed instructions
 	cerr << "successfully parsed:" << endl;
-	ostream& out(cerr);
+	std::ostream& out(cerr);
 	for (auto op : opList) {
 	  out << op.dir;
 	  if (op.whole_dir) {
@@ -498,7 +504,7 @@ static int doIndex(vector<string> subArgs) {
 	{
 	  auto makeDoc = [&] (const pair<string, int64_t>& x) {
 	    const string& filePath = x.first;
-	    ifstream infile(filePath);
+	    std::ifstream infile(filePath);
 	    Xapian::Document doc;
 	    doc.set_data(filePath);
 	    doc.add_value(DOC_MTIME, time_serialize(x.second));
@@ -646,7 +652,7 @@ static int doIndex(vector<string> subArgs) {
 	db.commit_transaction();
       }
     }
-  } catch (const Xapian::Error &e) {
+  } catch (const Xapian::Error& e) {
     cerr << e.get_description() << endl;
     return 1;
   }
@@ -749,7 +755,7 @@ static int doSearch(vector<string> subArgs) {
     for (Xapian::MSetIterator i = matches.begin(); i != matches.end(); ++i) {
       cout << i.get_document().get_data() << endl;
     }
-  } catch (const Xapian::Error &e) {
+  } catch (const Xapian::Error& e) {
     cerr << e.get_description() << endl;
     return 1;
   }
