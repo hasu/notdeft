@@ -91,9 +91,23 @@ static bool line_skip_marker(const string& s, size_t& pos) {
   return true;
 }
 
-/** Whether the lowercased string 's' matches 'pfx' starting at
- * position 'pos'. If so, increment 'pos' to index the position after
- * 'pfx'. */
+static inline bool ascii_p(const int c) {
+  return c >= 0 && c <= 127;
+}
+
+static inline bool ascii_p(const unsigned char c) {
+  return c <= 127;
+}
+
+/** Lowercases characters in the ASCII range only, using 'tolower',
+    which is undefined for all but unsigned char values and EOF. */
+static int ascii_tolower(const int c) {
+  return ascii_p(c) ? tolower(c) : c;
+}
+
+/** Whether lowercased (ASCII only) string 's' matches 'pfx' starting
+    at position 'pos'. If so, increment 'pos' to index the position
+    after 'pfx'. */
 static bool string_lc_skip_keyword(const string& s,
 				   size_t& pos,
 				   const string& pfx) {
@@ -102,7 +116,7 @@ static bool string_lc_skip_keyword(const string& s,
   if (s.length() < epos)
     return false;
   for (size_t i = 0; i < pfx_len; ++i) {
-    if (tolower(s[pos + i]) != pfx[i])
+    if (ascii_tolower(s[pos + i]) != pfx[i])
       return false;
   }
   pos += pfx_len;
@@ -133,10 +147,9 @@ static bool drop_substring(string& s, const string& sub) {
 }
 
 static bool whitespace_p(const string& s) {
-  for (auto p = s.c_str(); *p; p++)
-    if (!isspace(*p))
-      return false;
-  return true;
+  return std::all_of(s.cbegin(), s.cend(), [](const char c) {
+    return ascii_p(c) && isspace(c);
+  });
 }
 
 static bool org_drawer_line_p(const string& s,
@@ -175,7 +188,7 @@ static bool org_drawer_line_p(const string& s,
 static string downcase(const string& s) {
   string data;
   data.resize(s.length());
-  std::transform(s.begin(), s.end(), data.begin(), ::tolower);
+  std::transform(s.begin(), s.end(), data.begin(), ::ascii_tolower);
   return data;
 }
 
