@@ -362,7 +362,7 @@ information about all files at all times."
 ;; Faces
 
 (defgroup notdeft-faces nil
-  "Faces used in NotDeft mode"
+  "Faces used in NotDeft mode."
   :group 'notdeft
   :group 'faces)
 
@@ -1463,6 +1463,13 @@ The RECREATE argument is as for `notdeft-xapian-index-dirs'."
   (notdeft-xapian-search
    (notdeft-dcache--roots (notdeft-dcache))
    query))
+
+(defun notdeft-xapian-list-all-keyword-words ()
+  "List keyword words from all configured search indexes.
+That is, use the indexes in all configured directories."
+  (notdeft-xapian-list
+   (notdeft-dcache--roots (notdeft-dcache))
+   'keyword-words))
 
 (defun notdeft-set-all-files ()
   "Recompute `notdeft-all-files' for the current buffer.
