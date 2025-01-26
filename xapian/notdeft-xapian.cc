@@ -316,7 +316,8 @@ static bool uni_keyword_separator_p(const unsigned ch) {
 /** Expects an UTF-8 encoded line as the argument `s`,
     but reverts to octets for the remaining input if
     non-UTF-8 encoding is detected. */
-static void uni_index_keywords(Xapian::TermGenerator& indexer,
+static void uni_index_keywords(Xapian::Document& doc,
+			       Xapian::TermGenerator& indexer,
 			       const string& s) {
   Xapian::Utf8Iterator q(s);
   for (;;) {
@@ -325,6 +326,9 @@ static void uni_index_keywords(Xapian::TermGenerator& indexer,
     const char* const p = q.raw();
     while (q.left() && !uni_keyword_separator_p(*q)) q++;
     const string kw(p, q.raw());
+    /* An "XK" term is not queryable, but preserves non-word characters and case.
+       In other words it is the original keyword without any normalization. */
+    doc.add_boolean_term("XK" + kw);
     indexer.index_text(kw, 0, "K");
     indexer.increase_termpos();
     if (!q.left()) break;
@@ -596,7 +600,7 @@ static void doIndex(vector<string> subArgs) {
 		} else if (string_lc_skip_keyword(line, pos, "+keywords:") ||
 			   string_lc_skip_keyword(line, pos, "+filetags:")) {
 		  const string s = line.substr(pos);
-		  uni_index_keywords(indexer, s);
+		  uni_index_keywords(doc, indexer, s);
 		  indexer.index_text(s);
 		  indexer.increase_termpos();
 		} else {
@@ -799,21 +803,27 @@ static void write_string_literal(std::ostream& out, const string& s) {
 
 static void doList(vector<string> subArgs) {
   TCLAP::CmdLine cmdLine
-    ("Lists keyword words from the database index."
-     " Writes them out as a UTF-8 encoded list S-expression containing quoted strings,"
-     " intended to be `read'able from Emacs Lisp."
-     " Specify all database directories whose indexes are to be inspected.");
+    ("Lists keywords from the specified database indexes."
+     " By default lists the full keywords, as originally specified."
+     " With the --words option lists constituent words (with word characters only)."
+     " Prints out the requested word list as a UTF-8 encoded S-expression"
+     " of the form (DQ-STRING ...), suitable for `read'ing from Emacs Lisp."
+     " As positional arguments expects the NotDeft directories to include.");
+  TCLAP::SwitchArg
+    flag_words("w", "words", "list words", false);
+  cmdLine.add(flag_words);
   TCLAP::UnlabeledMultiArg<string>
-    dirsArg("dir...", "specifies directories to include", false, "directory");
+    dirsArg("dir...", "a directory to include", false, "directory");
   cmdLine.add(dirsArg);
   cmdLine.parse(subArgs);
 
   execute_with_db(dirsArg.getValue(), [&] (Xapian::Database& db) {
-    const string prefix("K");
+    const string prefix(flag_words.getValue() ? "K" : "XK");
+    const int pfx_len = prefix.size();
     cout << "(" << endl;
     for (Xapian::TermIterator it = db.allterms_begin(prefix), end = db.allterms_end(prefix);
 	 it != db.allterms_end(prefix); ++it) {
-      write_string_literal(cout, (*it).substr(1));
+      write_string_literal(cout, (*it).substr(pfx_len));
       cout << endl;
     }
     cout << ")" << endl;
@@ -829,7 +839,7 @@ static void usage() {
   cerr << "To find text documents" << endl;
   cerr << "(matching the specified query):" << endl;
   cerr << "  notdeft-xapian search [options] directory..." << endl;
-  cerr << "To list keyword words" << endl;
+  cerr << "To list terms from search indices" << endl;
   cerr << "(from search indexes in specified directories):" << endl;
   cerr << "  notdeft-xapian list [options] directory..." << endl;
 }

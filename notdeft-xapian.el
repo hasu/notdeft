@@ -191,20 +191,23 @@ non-directory filename, all descending, based on the
 	     (split-string s "\n" t))))
       files)))
 
-(defun notdeft-xapian-list (dirs kind)
+(defun notdeft-xapian-list (dirs &optional kind)
   "From Xapian indexes in DIRS list all terms of KIND.
-Return a list of strings. The only supported KIND is
-`keyword-words', meaning the individual words of keywords."
-  (when (eq kind 'keyword-words)
-    (let ((str (shell-command-to-string
-	        (concat
-	         (shell-quote-argument notdeft-xapian-program) " list"
-	         " " (mapconcat
-		      (lambda (dir)
-		        (shell-quote-argument
-		         (expand-file-name dir "~")))
-		      dirs " ")))))
-      (read str))))
+Return a list of strings. KIND is either: the symbol `keywords',
+for full keywords, as originally declared; or `keyword-words',
+for normalized words of keywords, meaning keywords split into one
+or more constituent words that only contain what Xapian regards
+as word characters. The default is `keywords'."
+  (let ((str (shell-command-to-string
+	      (concat
+	       (shell-quote-argument notdeft-xapian-program) " list"
+               (if (eq kind 'keyword-words) " --words" "")
+	       " " (mapconcat
+		    (lambda (dir)
+		      (shell-quote-argument
+		       (expand-file-name dir "~")))
+		    dirs " ")))))
+    (read str)))
 
 (provide 'notdeft-xapian)
 
