@@ -33,15 +33,6 @@ function defines the opening of Org \"deft:\" links."
 	  (message "No NotDeft note %S" name)
 	(org-open-file path t nil search)))))
 
-(defun notdeft-org-read-deft-link-name ()
-  "Query for a \"deft:\" link name.
-Do so interactively. Return the name component of a link, without
-the \"deft:\" prefix."
-  (let ((name-lst (notdeft-make-basename-list)))
-    ;; `ido` has been a part of Emacs since version 22
-    (when name-lst
-      (ido-completing-read "NotDeft note: " name-lst))))
-
 ;;;###autoload
 (defun notdeft-org-complete-deft-link (&optional prefix)
   "Define completion for Org \"deft:\" links.
@@ -179,14 +170,13 @@ the new note."
   #'notdeft-org-link-new-file
   "Deprecated. Use `notdeft-org-link-new-file'.")
 
-(eval-when-compile
-  (defvar notdeft-xapian-query))
-
 ;;;###autoload
-(defun notdeft-org-open-notdeft-link (query)
+(defun notdeft-org-open-notdeft-link (query &optional rich)
   "Open the NotDeft search specified by QUERY.
-This defines the opening of Org \"notdeft:\" links."
-  (notdeft-open-query query))
+Optionally and potentially (if supported) do the search and
+present results in a RICH manner. This defines the opening of Org
+\"notdeft:\" links."
+  (notdeft-search-present-results query rich))
 
 ;;;###autoload
 (defun notdeft-org-store-notdeft-link ()
@@ -194,37 +184,33 @@ This defines the opening of Org \"notdeft:\" links."
 Use `org-store-link' to invoke this function in a `notdeft-mode'
 buffer. Return nil if not in `notdeft-mode', or if there is no
 current query."
-  (when (and (eq major-mode 'notdeft-mode)
-	     notdeft-xapian-query)
-    (org-link-store-props
-     :type "notdeft"
-     :link (concat "notdeft:" notdeft-xapian-query))))
+  (let ((query (when (and (eq major-mode 'notdeft-mode)
+                          (boundp 'notdeft-xapian-query))
+	         (notdeft-chomp-nullify (eval 'notdeft-xapian-query t)))))
+    (when query
+      (org-link-store-props
+       :type "notdeft"
+       :link (concat "notdeft:" query)))))
 
 ;;;###autoload
-(defun notdeft-org-open-heading-as-query (&optional rank negate)
+(defun notdeft-org-search-for-heading (&optional as-phrase)
   "Query for current Org heading text.
-The RANK and NEGATE arguments are as for `notdeft-open-query'.
-When called interactively, any prefix arguments are also
-interpreted in the `notdeft-open-query' sense."
-  (interactive
-   (let ((prefix current-prefix-arg))
-     (list (equal prefix 1)
-	   (equal prefix '(4)))))
+Optionally execute the search as a phrase search if AS-PHRASE is
+non-nil or when called interactively with a
+\\[universal-argument] prefix argument."
+  (interactive "P")
   (let ((title
 	 (save-excursion
 	   (org-back-to-heading t)
 	   (nth 4 (org-heading-components)))))
-    (when title
-      (let ((title (notdeft-chomp title)))
-	(unless (string-equal title "")
-	  (notdeft-open-phrase-as-query title rank negate))))))
+    (notdeft-search-for-title title as-phrase)))
 
 (provide 'notdeft-org)
 
 ;;; notdeft-org.el ends here
 
 ;; NotDeft, a note manager for Emacs
-;; Copyright (C) 2017-2020  Tero Hasu
+;; Copyright (C) 2017-2025  Tero Hasu
 ;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

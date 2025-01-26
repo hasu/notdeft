@@ -19,8 +19,9 @@
    "" str))
 
 (defun notdeft-chomp-nullify (str &optional trim)
-  "Return string STR if non-empty, otherwise return nil.
-Optionally, use function TRIM to trim any result string."
+  "Return trimmed STR if it is non-empty.
+Otherwise return nil. Optionally, use function TRIM to further
+trim any result string."
   (when str
     (let ((str (notdeft-chomp str)))
       (unless (string= "" str)

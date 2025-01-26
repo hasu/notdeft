@@ -72,7 +72,6 @@ Add it for all `notdeft-directories'."
     (define-key map [(n)] #'notdeft-org-link-new-file) ;; n for new
     (define-key map [(s)] #'org-store-link) ;; s for store
     (define-key map [(S)] #'notdeft-org-store-deft-link) ;; s for store
-    (define-key map [(*)] #'notdeft-org-open-heading-as-query)
     (set-keymap-parent map 'notdeft-global-map)
     map)
   "Custom keymap for accessing NotDeft functionality.

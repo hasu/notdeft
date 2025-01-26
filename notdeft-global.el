@@ -33,19 +33,20 @@
 
 ;;; Code:
 
-(declare-function notdeft "notdeft")
+(declare-function notdeft "notdeft-mode")
 (declare-function notdeft-new-file "notdeft")
 (declare-function notdeft-new-file-named "notdeft")
 (declare-function notdeft-delete-file "notdeft")
 (declare-function notdeft-rename-file "notdeft")
+(declare-function notdeft-move-file "notdeft")
 (declare-function notdeft-archive-file "notdeft")
 (declare-function notdeft-show-file-directory "notdeft")
 (declare-function notdeft-refresh "notdeft")
 (declare-function notdeft-query-select-find-file "notdeft")
 (declare-function notdeft-lucky-find-file "notdeft")
-(declare-function notdeft-open-query "notdeft")
+(declare-function notdeft-open-query "notdeft-mode")
 (declare-function notdeft-switch-to-note-buffer "notdeft")
-(declare-function notdeft-switch-to-buffer "notdeft")
+(declare-function notdeft-switch-to-buffer "notdeft-mode")
 
 (defvar notdeft-global-map (make-sparse-keymap)
   "Global keymap for NotDeft.
@@ -62,11 +63,12 @@
 (define-key notdeft-global-map (kbd "C-m") #'notdeft-new-file-named)
 (define-key notdeft-global-map (kbd "C-d") #'notdeft-delete-file)
 (define-key notdeft-global-map (kbd "C-r") #'notdeft-rename-file)
+(define-key notdeft-global-map (kbd "m") #'notdeft-move-file)
 (define-key notdeft-global-map (kbd "C-a") #'notdeft-archive-file)
 (define-key notdeft-global-map (kbd "i") #'notdeft-show-file-directory)
 
 ;; state
-(define-key notdeft-global-map (kbd "C-l") #'notdeft-refresh)
+(define-key notdeft-global-map (kbd "g") #'notdeft-refresh)
 
 ;; search
 (define-key notdeft-global-map (kbd "C-f") #'notdeft-query-select-find-file)

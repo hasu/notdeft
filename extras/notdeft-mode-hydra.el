@@ -12,7 +12,7 @@
 ;;
 ;; To set the hydra up for use, you may:
 ;;  (autoload 'notdeft-mode-hydra/body "notdeft-mode-hydra" nil t)
-;;  (eval-after-load "notdeft"
+;;  (eval-after-load "notdeft-mode"
 ;;   '(define-key notdeft-mode-map (kbd "C-c h") 'notdeft-mode-hydra/body))
 
 ;;; Code:
@@ -22,17 +22,17 @@
 (autoload 'notdeft-global-hydra/body "notdeft-global-hydra" nil t)
 
 ;; Mode-private functions without autoloads.
-(declare-function notdeft-filter "notdeft")
-(declare-function notdeft-filter-clear "notdeft")
-(declare-function notdeft-grep-for-filter "notdeft")
-(declare-function notdeft-query-clear "notdeft")
-(declare-function notdeft-query-edit "notdeft")
-(declare-function notdeft-select-file "notdeft")
+(declare-function notdeft-filter "notdeft-mode")
+(declare-function notdeft-filter-clear "notdeft-mode")
+(declare-function notdeft-grep-for-filter "notdeft-mode")
+(declare-function notdeft-query-clear "notdeft-mode")
+(declare-function notdeft-query-edit "notdeft-mode")
+(declare-function notdeft-mode-open-file "notdeft-mode")
 
 (defhydra notdeft-mode-hydra ()
   "notdeft-mode"
   ;; file management
-  ("RET" notdeft-select-file "open" :exit t)
+  ("RET" notdeft-mode-open-file "open" :exit t)
   ("n" notdeft-new-file "create" :exit t)
   ("N" notdeft-new-file-named "create named" :exit t)
   ("d" notdeft-delete-file "delete")
