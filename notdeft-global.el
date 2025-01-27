@@ -6,22 +6,46 @@
 ;;; Commentary:
 ;; A keymap of NotDeft commands usable from outside `notdeft-mode'. It
 ;; is bound both as a variable and a function, to the name
-;; `notdeft-global-map'.
+;; `notdeft-global-map'. NotDeft does not predefine a keybinding for
+;; the keymap, however, and so it is left to users to bind the
+;; `notdeft-global-map' function to an appropriate prefix key if
+;; desired.
 ;;
-;; The `notdeft-global' feature is intended to be loadable before
-;; `notdeft' itself, and to support that all the commands bound here
-;; should be autoloadable. They should also be such that they could
-;; conceivably be invoked when NotDeft is not yet running. Additional
-;; commands can be bound from outside this feature once they have been
-;; defined or made `autoload'able.
+;; The keymap is quite conservative in what is included, favoring
+;; commands that should be quickly accessible due to their nature
+;; (like `notdeft-lucky-find-file' and `notdeft-new-file'), and
+;; commands that are likely to be used often (like
+;; `notdeft-query-select-find-file' and `notdeft-rename-file'). It is
+;; left to users to bind additional commands according to personal
+;; tastes and requirements.
 ;;
-;; Additional predefined autoloadable commands that could have been
-;; bound here include `notdeft' and `notdeft-open-query', as they are
-;; useful for opening a `notdeft-mode' buffer. However, for these
-;; important commands we leave the choice of a convenient keybinding
-;; to the user.
+;; The `notdeft-global' feature is optional in that no other NotDeft
+;; feature depends on it, allowing users to replace it, create derived
+;; keymaps, or to use different mechanisms for entering NotDeft
+;; commands (e.g., Transient or Hydra menus).
+;;
+;; The feature is also designed to be loadable before `notdeft'
+;; itself, and indeed some of the commands in the keymap (e.g.,
+;; `notdeft' and `notdeft-query-select-find-file') are suitable for
+;; launching NotDeft, and therefore causing the `notdeft' feature to
+;; get loaded. In order to support this all the commands bound in the
+;; keymap are autoloadable.
 
 ;;; Code:
+
+(declare-function notdeft "notdeft")
+(declare-function notdeft-new-file "notdeft")
+(declare-function notdeft-new-file-named "notdeft")
+(declare-function notdeft-delete-file "notdeft")
+(declare-function notdeft-rename-file "notdeft")
+(declare-function notdeft-archive-file "notdeft")
+(declare-function notdeft-show-file-directory "notdeft")
+(declare-function notdeft-refresh "notdeft")
+(declare-function notdeft-query-select-find-file "notdeft")
+(declare-function notdeft-lucky-find-file "notdeft")
+(declare-function notdeft-open-query "notdeft")
+(declare-function notdeft-switch-to-note-buffer "notdeft")
+(declare-function notdeft-switch-to-buffer "notdeft")
 
 (defvar notdeft-global-map (make-sparse-keymap)
   "Global keymap for NotDeft.
@@ -30,33 +54,35 @@
 
 (fset 'notdeft-global-map notdeft-global-map)
 
+;; UI
+(define-key notdeft-global-map (kbd "e") #'notdeft)
+
 ;; file management
 (define-key notdeft-global-map (kbd "C-n") #'notdeft-new-file)
 (define-key notdeft-global-map (kbd "C-m") #'notdeft-new-file-named)
-(define-key notdeft-global-map (kbd "C-x C-f") #'notdeft-find-file)
-(define-key notdeft-global-map (kbd "C-x C-w") #'notdeft-save-buffer)
 (define-key notdeft-global-map (kbd "C-d") #'notdeft-delete-file)
 (define-key notdeft-global-map (kbd "C-r") #'notdeft-rename-file)
-(define-key notdeft-global-map (kbd "C-x s") #'notdeft-move-into-subdir)
-(define-key notdeft-global-map (kbd "C-x e") #'notdeft-change-file-extension)
 (define-key notdeft-global-map (kbd "C-a") #'notdeft-archive-file)
-(define-key notdeft-global-map (kbd "C-x d") #'notdeft-open-in-deft)
+(define-key notdeft-global-map (kbd "i") #'notdeft-show-file-directory)
 
 ;; state
-(define-key notdeft-global-map (kbd "C-j") #'notdeft-chdir)
-(define-key notdeft-global-map (kbd "C-x c") #'notdeft-gc)
-(define-key notdeft-global-map (kbd "C-x r") #'notdeft-reindex)
+(define-key notdeft-global-map (kbd "C-l") #'notdeft-refresh)
 
 ;; search
 (define-key notdeft-global-map (kbd "C-f") #'notdeft-query-select-find-file)
-(define-key notdeft-global-map (kbd "C-x o") #'notdeft-lucky-find-file)
+(define-key notdeft-global-map (kbd "j") #'notdeft-lucky-find-file)
+(define-key notdeft-global-map (kbd "o") #'notdeft-open-query)
+
+;; movement
+(define-key notdeft-global-map (kbd "b") #'notdeft-switch-to-note-buffer)
+(define-key notdeft-global-map (kbd "B") #'notdeft-switch-to-buffer)
 
 (provide 'notdeft-global)
 
 ;;; notdeft-global.el ends here
 
 ;; NotDeft, a note manager for Emacs
-;; Copyright (C) 2017  Tero Hasu
+;; Copyright (C) 2017-2025  Tero Hasu
 ;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
