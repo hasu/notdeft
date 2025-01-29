@@ -1,14 +1,10 @@
-;; Autoloads for NotDeft commands.
-(require 'notdeft-autoloads)
-
 ;; Full path of "notdeft-xapian" executable.
 (let ((x
        (let ((default-directory
 	       (file-name-directory
 		(file-truename (locate-library "notdeft")))))
 	 (file-truename "xapian/notdeft-xapian"))))
-  (setq notdeft-xapian-program
-	(and (file-executable-p x) x)))
+  (setq notdeft-xapian-program x))
 
 ;; As an alternative to the above, you can try building and
 ;; configuring "notdeft-xapian" on demand, but on most systems this
@@ -104,7 +100,5 @@ Add it for all `notdeft-directories'."
   ;; Do minibuffer note selection by search and then Ivy choice list.
   (require 'notdeft-ivy)
   (add-to-list 'ivy-re-builders-alist
-	       '(notdeft-ivy-completing-read . ivy--regex-ignore-order))
-  (setq notdeft-completing-read-function 'notdeft-ivy-completing-read)
-  (setq notdeft-select-note-file-by-search t)
-  (setq notdeft-select-note-file-all t))
+	       '(notdeft-ivy-compread-file . ivy--regex-ignore-order))
+  (setq notdeft-compread-file-function 'notdeft-ivy-compread-file))

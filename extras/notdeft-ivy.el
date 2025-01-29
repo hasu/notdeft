@@ -5,18 +5,18 @@
 ;; See end of file for licensing information.
 
 ;;; Commentary:
-;; An Ivy-based implementation of `notdeft-completing-read-function'.
+;; An Ivy-based implementation of `notdeft-compread-file-function'.
 ;;
 ;; Suggested use:
-;;  (add-to-list 'ivy-re-builders-alist '(notdeft-ivy-completing-read . ivy--regex-ignore-order))
-;;  (setq notdeft-completing-read-function 'notdeft-ivy-completing-read)
+;;  (add-to-list 'ivy-re-builders-alist '(notdeft-ivy-compread-file . ivy--regex-ignore-order))
+;;  (setq notdeft-compread-file-function 'notdeft-ivy-compread-file)
 
 ;;; Code:
 
 (require 'ivy)
 
 ;;;###autoload
-(defun notdeft-ivy-completing-read (files &optional prompt)
+(defun notdeft-ivy-compread-file (files &optional prompt)
   "Present a choice of FILES with `ivy-read'.
 Only present the non-directory component of each file. There may
 be duplicates of the same non-directory name. If non-nil, use the
@@ -32,9 +32,9 @@ specified PROMPT. Return the path of the selected file."
 	   (ivy-read
 	    (or prompt "File: ")
 	    choices
-	    :history 'notdeft-find-file-history
+	    :history 'notdeft-compread-file-history
 	    :require-match t
-	    :caller 'notdeft-ivy-completing-read))))
+	    :caller 'notdeft-ivy-compread-file))))
     file))
 
 (provide 'notdeft-ivy)

@@ -15,6 +15,63 @@
 ;; allow a NotDeft buffer to be opened before the feature has been
 ;; loaded.
 
+;; File Browser
+
+;; The NotDeft buffer is simply a local search engine result browser
+;; which lists the titles of all text files matching a search query
+;; (entered by first pressing TAB or `C-c C-o`), followed by short
+;; summaries and last modified times. The title is taken to be the
+;; first line of the file (or as specified by an Org "TITLE" file
+;; property) and the summary is extracted from the text that follows.
+;; By default, files are sorted in terms of the last modified date,
+;; from newest to oldest.
+
+;; Searching and Filtering
+
+;; NotDeft's primary operations are searching and filtering. The list
+;; of files matching a search query can be further narrowed down using
+;; a filter string, which will match both the title and the body text.
+;; To initiate a filter, simply start typing. Filtering happens on the
+;; fly. As you type, the file browser is updated to include only files
+;; that match the current string.
+
+;; To open the first matching file, simply press `RET`.  If no files
+;; match your filter string, pressing `RET` will create a new file
+;; using the string as the title.  This is a very fast way to start
+;; writing new notes.  The filename will be generated automatically.
+
+;; To open files other than the first match, navigate up and down
+;; using `C-p` and `C-n` and press `RET` on the file you want to open.
+
+;; Press `C-c C-c` to clear the filter string and display all files
+;; and `C-c e` to refresh the file browser using the current
+;; filter string.
+
+;; Static filtering is also possible by pressing `C-c C-l`.  This is
+;; sometimes useful on its own, and it may be preferable in some
+;; situations, such as over slow connections or on older systems,
+;; where interactive filtering performance is poor.
+
+;; Common file operations can also be carried out from within a
+;; NotDeft buffer. Files can be renamed using `C-c C-r` or deleted
+;; using `C-c C-d`. New files can also be created using `C-c C-n` for
+;; quick creation or `C-c C-m` for a filename prompt. You can leave a
+;; `notdeft-mode' buffer at any time with `C-c C-q`, which buries the
+;; buffer, or kills it with a prefix argument `C-u`.
+
+;; Archiving unused files can be carried out by pressing `C-c C-a`.
+;; Files will be moved to `notdeft-archive-directory' under the note
+;; file's NotDeft data directory. The archive directory is by default
+;; named so that it gets excluded from searches.
+
+;; Launching
+
+;; Once you have NotDeft installed (with the necessary autoloads) you
+;; can then run `M-x notdeft` to create a `notdeft-mode' buffer.
+;; Alternatively, you may find it convenient to execute `M-x
+;; notdeft-open-query` to enter a search query from anywhere, which
+;; then also opens a `notdeft-mode' buffer for displaying the results.
+
 ;;; Code:
 
 (require 'cl-lib)
@@ -786,19 +843,6 @@ called with prefix argument(s), and kill ALL if called with two
 
 ;;; `notdeft-mode' major mode definition
 
-(defmacro notdeft-mode-file-command (file-command)
-  "An interactive command on a selected file.
-Expresses an `interactive' function that calls a sub FILE-COMMAND
-interactively with the selected file configured as current,
-provided that there is a file at point in a `notdeft-mode'
-buffer. FILE-COMMAND must also be an interactive function
-expression."
-  `(lambda ()
-     (interactive)
-     (let ((notdeft-current-note-filename (notdeft-filename-at-point t)))
-       (when notdeft-current-note-filename
-         (call-interactively ',file-command)))))
-
 (defvar notdeft-mode-map
   (let ((i 0)
         (map (make-keymap)))
@@ -824,17 +868,19 @@ expression."
     (define-key map (kbd "C-c C-n") #'notdeft-new-file)
     (define-key map (kbd "C-c C-m") #'notdeft-new-file-named)
     ;; File management
-    (define-key map (kbd "C-c C-d") (notdeft-mode-file-command notdeft-delete-file))
-    (define-key map (kbd "C-c C-r") (notdeft-mode-file-command notdeft-rename-file))
-    (define-key map (kbd "C-c C-a") (notdeft-mode-file-command notdeft-archive-file))
-    (define-key map (kbd "C-c x e") (notdeft-mode-file-command notdeft-change-file-extension))
-    (define-key map (kbd "C-c x s") (notdeft-mode-file-command notdeft-move-into-subdir))
+    (define-key map (kbd "C-c C-d") #'notdeft-delete-file)
+    (define-key map (kbd "C-c C-r") #'notdeft-rename-file)
+    (define-key map (kbd "C-c m") #'notdeft-move-file)
+    (define-key map (kbd "C-c C-a") #'notdeft-archive-file)
+    (define-key map (kbd "C-c x e") #'notdeft-change-file-extension)
+    (define-key map (kbd "C-c x s") #'notdeft-move-into-subdir)
     ;; File information
-    (define-key map (kbd "C-c i") (notdeft-mode-file-command notdeft-show-file-directory))
+    (define-key map (kbd "C-c i") #'notdeft-show-file-directory)
     (define-key map (kbd "C-c I") #'notdeft-show-file-info)
-    (define-key map (kbd "C-c P") (notdeft-mode-file-command notdeft-show-file-parse))
+    (define-key map (kbd "C-c P") #'notdeft-show-file-parse)
     ;; Miscellaneous
     (define-key map (kbd "C-c g") #'notdeft-grep-for-filter)
+    (define-key map (kbd "C-c e") #'notdeft-refresh)
     (define-key map (kbd "C-c C-q") #'notdeft-quit)
     ;; Xapian
     (define-key map (kbd "C-c C-o") #'notdeft-query-edit)

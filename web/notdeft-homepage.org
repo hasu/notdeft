@@ -295,7 +295,7 @@ Normally, executing the =notdeft= command only creates a new =*NotDeft*= buffer 
 
 The =notdeft-open-query= command also accepts a prefix argument, to arrange for the search results to be listed in a new buffer. This behavior can also be made the default for that command by setting the configuration parameter =notdeft-open-query-in-new-buffer= to =t=. With that parameter set, the prefix argument's meaning is inverted, so that =C-u M-x notdeft-open-query= does /not/ create an additional buffer.
 
-The question of whether to create a new buffer does not apply to other search commands. Within a NotDeft buffer, the commands =notdeft-query-edit= and =notdeft-query-clear= merely replace the buffer's search result set, whereas the commands =notdeft-lucky-find-file= and =notdeft-query-select-find-file= do not use a NotDeft buffer for displaying their results.
+The question of whether to create a new buffer does not apply to other search commands. Within a NotDeft buffer, the commands =notdeft-query-edit= and =notdeft-query-clear= merely replace the buffer's search result set, whereas the commands =notdeft-lucky-find-file= and =notdeft-search-find-file= do not use a NotDeft buffer for displaying their results.
 
 For dealing with existing =notdeft-mode= buffers, there is a =notdeft-switch-to-buffer= command for interactively selecting a buffer and switching to it. It presents a choice list of buffer names in the minibuffer, and shows any query and filter strings associated with those buffers for better informed selection.
 

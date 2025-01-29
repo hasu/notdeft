@@ -98,8 +98,8 @@ NOTENAME, pick any one of them for deriving a description."
 	    (file
 	     ;; Select note before prompting for any description.
 	     ;; Provide any region text as a selection hint.
-	     (let ((notdeft-select-note-file-query desc)
-		   (notdeft-xapian-order-by-time nil))
+	     (let ((notdeft-select-note-file-initial-query desc)
+                   (notdeft-xapian-order-by-time nil))
 	       (notdeft-select-note-file)))
 	    (desc
 	     (when (and file (/= pfx 4))
@@ -176,7 +176,7 @@ the new note."
 Optionally and potentially (if supported) do the search and
 present results in a RICH manner. This defines the opening of Org
 \"notdeft:\" links."
-  (notdeft-search-present-results query rich))
+  (notdeft-open-search query rich))
 
 ;;;###autoload
 (defun notdeft-org-store-notdeft-link (&optional select)

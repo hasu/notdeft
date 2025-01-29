@@ -10,25 +10,19 @@
 ;; which are mostly the same as for `notdeft-global-hydra'. The
 ;; difference here is that the commands are mostly chainable.
 ;;
-;; To set the hydra up for use, you may:
-;;  (autoload 'notdeft-mode-hydra/body "notdeft-mode-hydra" nil t)
+;; To set the hydra up for use, you may for example:
 ;;  (eval-after-load "notdeft-mode"
 ;;   '(define-key notdeft-mode-map (kbd "C-c h") 'notdeft-mode-hydra/body))
 
 ;;; Code:
 
 (require 'hydra)
+(require 'notdeft)
+(require 'notdeft-mode)
 
-(autoload 'notdeft-global-hydra/body "notdeft-global-hydra" nil t)
+(declare-function notdeft-global-hydra/body "notdeft-global-hydra")
 
-;; Mode-private functions without autoloads.
-(declare-function notdeft-filter "notdeft-mode")
-(declare-function notdeft-filter-clear "notdeft-mode")
-(declare-function notdeft-grep-for-filter "notdeft-mode")
-(declare-function notdeft-query-clear "notdeft-mode")
-(declare-function notdeft-query-edit "notdeft-mode")
-(declare-function notdeft-mode-open-file "notdeft-mode")
-
+;;;###autoload
 (defhydra notdeft-mode-hydra ()
   "notdeft-mode"
   ;; file management
@@ -60,7 +54,7 @@
   ("B" notdeft-switch-to-buffer "switch to buffer" :exit t)
   ;; other
   ("z" notdeft-global-hydra/body "more" :exit t)
-  ("q" quit-window "quit" :exit t)
+  ("q" notdeft-quit "quit" :exit t)
   ("C-g" nil "cancel" :exit t))
 
 (provide 'notdeft-mode-hydra)

@@ -39,7 +39,7 @@
 
    ["Search"
     ("o" "Search" notdeft-open-query)
-    ("f" "search/open" notdeft-query-select-find-file)
+    ("f" "search/open" notdeft-search-find-file)
     ("x o" "Lucky search" notdeft-lucky-find-file)]
 
    ["Movement"

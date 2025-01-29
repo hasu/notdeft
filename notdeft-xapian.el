@@ -23,7 +23,7 @@ Specified as an absolute path. Must be set appropriately for the
 
 (defcustom notdeft-xapian-max-results 100
   "Maximum number of Xapian query results.
-\(I.e., '--max-count' for `notdeft-xapian-program'.)
+(I.e., '--max-count' for `notdeft-xapian-program'.)
 No limit if 0."
   :type 'integer
   :safe #'integerp

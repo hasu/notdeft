@@ -14,18 +14,17 @@
 ;; in a different way.
 ;;
 ;; To bind the hydra, one can for example:
-;;   (autoload 'notdeft-global-hydra/body "notdeft-global-hydra" nil t)
 ;;   (global-set-key [f6] 'notdeft-global-hydra/body)
 
 ;;; Code:
 
 (require 'hydra)
+(require 'notdeft)
+(require 'notdeft-mode)
 
-(autoload 'notdeft-mode-hydra/body "notdeft-mode-hydra" nil t)
+(declare-function notdeft-mode-hydra/body "notdeft-mode-hydra")
 
-;; Functions without autoloads.
-(declare-function notdeft-buffer-p "notdeft")
-
+;;;###autoload
 (defhydra notdeft-global-hydra (:exit t)
   "NotDeft"
   ;; file management
@@ -40,7 +39,6 @@
   ("e" notdeft-change-file-extension "change ext")
   ("a" notdeft-archive-file "archive")
   ("i" notdeft-show-file-directory "show dir" :exit nil)
-  ("x d" notdeft-open-in-deft "Deft")
   ;; state
   ("j" notdeft-chdir "chdir" :exit nil)
   ("g" notdeft-refresh "refresh" :exit nil)
@@ -48,14 +46,13 @@
   ("x r" notdeft-reindex "reindex" :exit nil)
   ;; search
   ("o" notdeft-open-query "search")
-  ("f" notdeft-query-select-find-file "search/open")
+  ("f" notdeft-search-find-file "search/open")
   ("x o" notdeft-lucky-find-file "lucky search")
   ;; movement
   ("b" notdeft-switch-to-note-buffer "switch to note")
   ("B" notdeft-switch-to-buffer "switch to buffer")
   ;; other
-  ("z" (when (notdeft-buffer-p)
-	 (notdeft-mode-hydra/body)) "more")
+  ("z" (when (notdeft-buffer-p) (notdeft-mode-hydra/body)) "more")
   ("." notdeft "NotDeft")
   ("C-g" nil "cancel"))
 
