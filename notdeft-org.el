@@ -179,14 +179,23 @@ present results in a RICH manner. This defines the opening of Org
   (notdeft-search-present-results query rich))
 
 ;;;###autoload
-(defun notdeft-org-store-notdeft-link ()
+(defun notdeft-org-store-notdeft-link (&optional select)
   "Store the current NotDeft search as an Org link.
-Use `org-store-link' to invoke this function in a `notdeft-mode'
-buffer. Return nil if not in `notdeft-mode', or if there is no
-current query."
-  (let ((query (when (and (eq major-mode 'notdeft-mode)
-                          (boundp 'notdeft-xapian-query))
-	         (notdeft-chomp-nullify (eval 'notdeft-xapian-query t)))))
+Use `org-store-link' to invoke this function. If invoked in
+`notdeft-mode', then store a link to the current Xapian query, if
+any. In other modes use the latest entry in
+`notdeft-xapian-query-history', if any. With a non-nil SELECT
+argument let the user choose interactively from among the history
+entries, regardless of mode."
+  (let* ((query (cond
+                 (select
+                  (ido-completing-read "Query: " notdeft-xapian-query-history nil t))
+                 ((and (eq major-mode 'notdeft-mode)
+                       (boundp 'notdeft-xapian-query))
+                  (eval 'notdeft-xapian-query t))
+                 (t
+                  (car notdeft-xapian-query-history))))
+         (query (notdeft-chomp-nullify query)))
     (when query
       (org-link-store-props
        :type "notdeft"
