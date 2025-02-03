@@ -1,4 +1,6 @@
 PROGRAM := notdeft-xapian
+CXX := c++
+CXXFLAGS := -Wall
 
 default : build
 
@@ -7,7 +9,7 @@ default : build
 build : $(PROGRAM)
 
 $(PROGRAM) : notdeft-xapian.cc
-	c++ -o $@ $< -std=c++11 -Wall `pkg-config --cflags --libs tclap` `xapian-config --cxxflags --libs`
+	$(CXX) -o $@ $< -std=c++11 $(CXXFLAGS) `pkg-config --cflags --libs tclap` `xapian-config --cxxflags --libs`
 
 clean :
 	-rm $(PROGRAM)
