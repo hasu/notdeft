@@ -9,6 +9,7 @@ notdeft-autoloads.el
 local.mk
 /README.html
 .dir-locals.el
+compile_flags.txt
 /download/
 /PKGNAMEVER
 .notdeft-db/
