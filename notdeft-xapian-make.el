@@ -49,7 +49,6 @@ the arguments."
 If the path is not absolute, it is considered relative to
 `notdeft-xapian-home'."
   :type 'string
-  :safe #'stringp
   :group 'notdeft)
 
 (defvar notdeft-xapian-home
@@ -63,6 +62,50 @@ directory separator at the end.")
 
 (defvar notdeft-xapian-compile-buffer-name "*Compile notdeft-xapian*"
   "Name of the buffer used for compiling notdeft-xapian.")
+
+(defun notdeft-xapian-program-target-path ()
+  "Compute path of program executable to build.
+Return it or nil."
+  (when (and (or notdeft-xapian-program-install-path notdeft-xapian-program)
+             notdeft-xapian-home
+	     (file-directory-p notdeft-xapian-home))
+    (or (when (and notdeft-xapian-program
+                   (or (not (file-exists-p notdeft-xapian-program))
+                       (file-writable-p notdeft-xapian-program)))
+          notdeft-xapian-program)
+        (expand-file-name
+	 notdeft-xapian-program-install-path
+	 notdeft-xapian-home))))
+
+(defun notdeft-xapian-program-compile-command (&optional program)
+  "Return `compile-command' for notdeft-xapian PROGRAM.
+Base it on `notdeft-xapian-program-compile-command-format'. If no
+PROGRAM is specified then use
+`notdeft-xapian-program-target-path'."
+  (let* ((exe-file (or program (notdeft-xapian-program-target-path)))
+	 (cxx-file (expand-file-name
+		    "notdeft-xapian.cc"
+		    notdeft-xapian-home))
+	 (compile-command
+	  (if (functionp notdeft-xapian-program-compile-command-format)
+	      (funcall notdeft-xapian-program-compile-command-format
+		       exe-file cxx-file)
+	    (format notdeft-xapian-program-compile-command-format
+		    (shell-quote-argument exe-file)
+		    (shell-quote-argument cxx-file)))))
+    compile-command))
+
+(eval-when-compile
+  (defvar compile-command))
+
+(defun notdeft-xapian-set-compile-command ()
+  "Set notdeft-xapian `compile-command' locally."
+  (interactive)
+  (let ((exe-file (notdeft-xapian-program-target-path)))
+    (when exe-file
+      (let ((command (notdeft-xapian-program-compile-command exe-file)))
+        (setq-local compile-command command)
+        (message "Local `compile-command': %s" command)))))
 
 (defun notdeft-xapian-program-current-p (program)
   "Whether the notdeft-xapian PROGRAM is current.
@@ -84,28 +127,19 @@ source file is newer."
   "Compile the notdeft-xapian program.
 Use notdeft-xapian sources in `notdeft-xapian-home', and build
 the PROGRAM, which must be specified as an absolute path. On
-success return PROGRAM, and otherwise nil."
+success return PROGRAM, and raise an `error'."
   (interactive)
   (unless (file-directory-p notdeft-xapian-home)
     (error "Cannot locate notdeft-xapian sources"))
   (let* ((exe-file program)
-	 (cxx-file (expand-file-name
-		    "notdeft-xapian.cc"
-		    notdeft-xapian-home))
-	 (compile-command
-	  (if (functionp notdeft-xapian-program-compile-command-format)
-	      (funcall notdeft-xapian-program-compile-command-format
-		       exe-file cxx-file)
-	    (format notdeft-xapian-program-compile-command-format
-		    (shell-quote-argument exe-file)
-		    (shell-quote-argument cxx-file))))
+	 (shell-command (notdeft-xapian-program-compile-command exe-file))
 	 (buffer (get-buffer-create notdeft-xapian-compile-buffer-name)))
     (pop-to-buffer notdeft-xapian-compile-buffer-name)
     (let ((exit-code
-	   (call-process "sh" nil buffer t "-c" compile-command)))
+	   (call-process "sh" nil buffer t "-c" shell-command)))
       (unless (zerop exit-code)
 	(error "Compilation of notdeft-xapian failed: %s (%d)"
-	       compile-command exit-code))
+	       shell-command exit-code))
       (unless (file-executable-p exe-file)
 	(error (concat "Compilation of notdeft-xapian failed: "
 		       "Executable %S not created")
@@ -126,13 +160,7 @@ if the program could not be compiled."
   (when (or notdeft-xapian-program-install-path notdeft-xapian-program)
     (when (and notdeft-xapian-home
 	       (file-directory-p notdeft-xapian-home))
-      (let ((exe-file (or (when (and notdeft-xapian-program
-                                     (or (not (file-exists-p notdeft-xapian-program))
-                                         (file-writable-p notdeft-xapian-program)))
-                            notdeft-xapian-program)
-                          (expand-file-name
-	                   notdeft-xapian-program-install-path
-	                   notdeft-xapian-home))))
+      (let ((exe-file (notdeft-xapian-program-target-path)))
 	(when (or force (not (notdeft-xapian-program-current-p exe-file)))
 	  (notdeft-xapian-compile-program exe-file))
 	exe-file))))
@@ -147,7 +175,7 @@ even after any compilation attempt."
   (setq notdeft-xapian-program
 	(let ((exe-file
 	       (ignore-errors
-		 (notdeft-xapian-make-program nil))))
+		 (notdeft-xapian-make-program))))
 	  (when (and exe-file (file-executable-p exe-file))
 	    exe-file))))
 
