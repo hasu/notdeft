@@ -10,15 +10,23 @@
 ;;
 ;; Instead of setting the `notdeft-xapian-program' variable yourself,
 ;; you may instead load this `notdeft-xapian-make' feature to have the
-;; program built and configured automatically. You may additionally
-;; need to set the `notdeft-xapian-program-compile-command-format' to
-;; something that produces a suitable compiler invocation for your
-;; platform.
+;; program built and configured automatically. Or, you may set
+;; `notdeft-xapian-program', and have the executable (re)built there
+;; automatically when writable and out of date. If
+;; `notdeft-xapian-program' is nil then the
+;; `notdeft-xapian-program-install-path' variable defines where to
+;; install the executable program and what path to assign to
+;; `notdeft-xapian-program'.
+;;
+;; To configure this feature you may additionally need to set the
+;; `notdeft-xapian-program-compile-command-format' to something that
+;; produces a suitable compiler invocation for your platform.
 ;;
 ;; Suggested use:
 ;;  (add-hook 'notdeft-load-hook 'notdeft-xapian-make-program-when-uncurrent)
 
 (require 'notdeft-base)
+(require 'notdeft-xapian)
 
 ;;; Code:
 
@@ -36,8 +44,7 @@ the arguments."
 	  (function :tag "Function"))
   :group 'notdeft)
 
-(defcustom notdeft-xapian-program-install-path
-  "notdeft-xapian"
+(defcustom notdeft-xapian-program-install-path "notdeft-xapian"
   "Path for the notdeft-xapian executable to build.
 If the path is not absolute, it is considered relative to
 `notdeft-xapian-home'."
@@ -46,44 +53,42 @@ If the path is not absolute, it is considered relative to
   :group 'notdeft)
 
 (defvar notdeft-xapian-home
-  (expand-file-name "xapian/"
-		    (file-name-directory
-		     (file-truename (locate-library "notdeft"))))
+  (expand-file-name
+   "xapian"
+   (file-name-directory
+    (locate-library "notdeft-xapian-make.el")))
   "Directory path for notdeft-xapian sources.
-Must specify an absolute path.")
+Must specify an absolute path, and may or may not have a
+directory separator at the end.")
 
 (defvar notdeft-xapian-compile-buffer-name "*Compile notdeft-xapian*"
   "Name of the buffer used for compiling notdeft-xapian.")
 
-(defun notdeft-xapian-program-current-p (&optional program)
+(defun notdeft-xapian-program-current-p (program)
   "Whether the notdeft-xapian PROGRAM is current.
 It is uncurrent if it does not exist as an executable, or if its
-source file is newer. PROGRAM defaults to
-`notdeft-xapian-program-install-path'."
-  (let ((exe-file (expand-file-name
-		   (or program notdeft-xapian-program-install-path)
-		   notdeft-xapian-home)))
+source file is newer."
+  (let ((exe-file (expand-file-name program notdeft-xapian-home)))
     (when (file-executable-p exe-file)
       (let ((cxx-file (expand-file-name
 		       "notdeft-xapian.cc"
 		       notdeft-xapian-home)))
 	(when (file-exists-p cxx-file)
 	  (not (time-less-p
+                ;; from Emacs 26.1 could use `file-attribute-modification-time'
 		(nth 5 (file-attributes exe-file))
 		(nth 5 (file-attributes cxx-file)))))))))
 
 ;;;###autoload
-(defun notdeft-xapian-compile-program (&optional program)
+(defun notdeft-xapian-compile-program (program)
   "Compile the notdeft-xapian program.
 Use notdeft-xapian sources in `notdeft-xapian-home', and build
-the PROGRAM, which defaults to `notdeft-xapian-program-install-path'.
-On success, return the path of the built executable."
+the PROGRAM, which must be specified as an absolute path. On
+success return PROGRAM, and otherwise nil."
   (interactive)
   (unless (file-directory-p notdeft-xapian-home)
     (error "Cannot locate notdeft-xapian sources"))
-  (let* ((exe-file (expand-file-name
-		    (or program notdeft-xapian-program-install-path)
-		    notdeft-xapian-home))
+  (let* ((exe-file program)
 	 (cxx-file (expand-file-name
 		    "notdeft-xapian.cc"
 		    notdeft-xapian-home))
@@ -97,8 +102,7 @@ On success, return the path of the built executable."
 	 (buffer (get-buffer-create notdeft-xapian-compile-buffer-name)))
     (pop-to-buffer notdeft-xapian-compile-buffer-name)
     (let ((exit-code
-	   (call-process
-	    "sh" nil buffer t "-c" compile-command)))
+	   (call-process "sh" nil buffer t "-c" compile-command)))
       (unless (zerop exit-code)
 	(error "Compilation of notdeft-xapian failed: %s (%d)"
 	       compile-command exit-code))
@@ -112,24 +116,26 @@ On success, return the path of the built executable."
 (defun notdeft-xapian-make-program (&optional force)
   "Compile notdeft-xapian program.
 Only do that if the source directory `notdeft-xapian-home'
-exists, and the target path `notdeft-xapian-program-install-path'
-is non-nil. In that case generate the executable with the target
-path, but only if any existing executable appears to be
-uncurrent, or if the FORCE flag is non-nil. Return the absolute
-target path if it is known, even if the program could not be
-compiled."
-  (when notdeft-xapian-program-install-path
+exists, and the target path `notdeft-xapian-program' or
+`notdeft-xapian-program-install-path' is non-nil. In that case
+generate the executable with the target path, but only if any
+existing executable appears to be uncurrent, or if the FORCE flag
+is non-nil. Return the absolute target path if it is known, even
+if the program could not be compiled."
+  (interactive "P")
+  (when (or notdeft-xapian-program-install-path notdeft-xapian-program)
     (when (and notdeft-xapian-home
 	       (file-directory-p notdeft-xapian-home))
-      (let ((exe-file (expand-file-name
-		       notdeft-xapian-program-install-path
-		       notdeft-xapian-home)))
+      (let ((exe-file (or (when (and notdeft-xapian-program
+                                     (or (not (file-exists-p notdeft-xapian-program))
+                                         (file-writable-p notdeft-xapian-program)))
+                            notdeft-xapian-program)
+                          (expand-file-name
+	                   notdeft-xapian-program-install-path
+	                   notdeft-xapian-home))))
 	(when (or force (not (notdeft-xapian-program-current-p exe-file)))
 	  (notdeft-xapian-compile-program exe-file))
 	exe-file))))
-
-(eval-when-compile
-  (defvar notdeft-xapian-program))
 
 ;;;###autoload
 (defun notdeft-xapian-make-program-when-uncurrent ()
@@ -150,7 +156,7 @@ even after any compilation attempt."
 ;;; notdeft-xapian-make.el ends here
 
 ;; NotDeft, a note manager for Emacs
-;; Copyright (C) 2020  Tero Hasu
+;; Copyright (C) 2020-2025  Tero Hasu
 ;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
