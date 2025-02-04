@@ -4,17 +4,30 @@
 ;; See end of file for licensing information.
 
 ;;; Commentary:
-;; A command for setting up `company-clang' completion for
+;; Commands for use in setting up Emacs for editing and compiling
 ;; "notdeft-xapian.cc". Intended for use with the "xapian" directory
-;; as the `default-directory'. The implementation is somewhat platform
-;; specific.
+;; as the `default-directory'. The implementations are somewhat
+;; platform specific.
 
 ;;; Code:
 
+(require 'compile)
 (require 'files-x)
+(require 'notdeft-xapian-make)
 
 (defvar notdeft-xapian-clang-modes '(c++-mode c++-ts-mode)
   "Major modes relevant to C++ development.")
+
+;;;###autoload
+(defun notdeft-xapian-configure-compile-command ()
+  "Set `compile-command' as a directory local.
+Set them for `notdeft-xapian-clang-modes'."
+  (interactive)
+  (let ((exe-file (notdeft-xapian-program-target-path)))
+    (when exe-file
+      (let ((command (notdeft-xapian-program-compile-command exe-file)))
+        (dolist (mode notdeft-xapian-clang-modes)
+          (add-dir-local-variable mode 'compile-command command))))))
 
 ;;;###autoload
 (defun notdeft-xapian-configure-company-clang-arguments ()
@@ -30,6 +43,17 @@ Set them for `notdeft-xapian-clang-modes'."
                   (append '("-std=c++11") tclap-args xapian-args)))))
     (dolist (mode notdeft-xapian-clang-modes)
       (add-dir-local-variable mode 'company-clang-arguments args))))
+
+;;;###autoload
+(defun notdeft-xapian-set-compile-command ()
+  "Set notdeft-xapian `compile-command' locally.
+Set it locally for the current buffer, without persistence."
+  (interactive)
+  (let ((exe-file (notdeft-xapian-program-target-path)))
+    (when exe-file
+      (let ((command (notdeft-xapian-program-compile-command exe-file)))
+        (setq-local compile-command command)
+        (message "Local `compile-command': %s" command)))))
 
 (provide 'notdeft-develop)
 

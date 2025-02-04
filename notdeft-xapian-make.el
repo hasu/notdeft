@@ -95,18 +95,6 @@ PROGRAM is specified then use
 		    (shell-quote-argument cxx-file)))))
     compile-command))
 
-(eval-when-compile
-  (defvar compile-command))
-
-(defun notdeft-xapian-set-compile-command ()
-  "Set notdeft-xapian `compile-command' locally."
-  (interactive)
-  (let ((exe-file (notdeft-xapian-program-target-path)))
-    (when exe-file
-      (let ((command (notdeft-xapian-program-compile-command exe-file)))
-        (setq-local compile-command command)
-        (message "Local `compile-command': %s" command)))))
-
 (defun notdeft-xapian-program-current-p (program)
   "Whether the notdeft-xapian PROGRAM is current.
 It is uncurrent if it does not exist as an executable, or if its
