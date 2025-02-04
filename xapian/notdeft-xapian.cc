@@ -43,7 +43,7 @@ namespace NotDeft {
     string get_description() const {
       return string(type)
 	+ (msg.empty() ? "" : (": " + msg))
-	+ (sys_errno ? (string(strerror(sys_errno)) + "(errno=" + std::to_string(sys_errno) + ")") : "");
+	+ (sys_errno ? (string(": ") + strerror(sys_errno) + " (errno=" + std::to_string(sys_errno) + ")") : "");
     }
 
   protected:
