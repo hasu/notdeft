@@ -35,13 +35,17 @@ default is customizable."
   :group 'notdeft)
 
 (defcustom notdeft-extension "org"
-  "Default NotDeft file extension."
+  "Default NotDeft file extension.
+May not be nil, and is without the preceding dot character. This
+file name extension is given to new note files by default."
   :type 'string
   :safe #'stringp
   :group 'notdeft)
 
 (defcustom notdeft-secondary-extensions nil
-  "Additional NotDeft file extensions."
+  "Additional NotDeft file extensions.
+NotDeft note files may have these extensions even though
+`notdeft-extension' is the default one for new notes."
   :type '(repeat string)
   :safe (lambda (lst) (cl-every #'stringp lst))
   :group 'notdeft)

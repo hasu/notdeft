@@ -12,10 +12,24 @@
 
 ;;; Code:
 
-(defcustom notdeft-xapian-program nil
+(defcustom notdeft-xapian-program
+  (let ((dir (expand-file-name
+              "xapian"
+               (file-name-directory
+	        (locate-library "notdeft-xapian.el")))))
+    (when (and dir (file-directory-p dir))
+      (cl-some (lambda (cand)
+                 (let ((exe (expand-file-name cand dir)))
+                   (when (file-executable-p exe)
+                     exe)))
+               '("notdeft-xapian" "notdeft-xapian.exe"))))
   "Xapian backend's executable program path.
 Specified as an absolute path. Must be set appropriately for the
-`notdeft-xapian' feature to be usable."
+`notdeft-xapian' feature to be usable, on which much of NotDeft
+functionality relies. By default an attempt is made to compute
+the path in terms of `locate-library' and default naming, which
+will not succeed unless the program has already been compiled
+into an executable."
   :type '(choice (const :tag "None" nil)
 		 (file :tag "Path"))
   :safe #'string-or-null-p
