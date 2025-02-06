@@ -267,18 +267,19 @@ indexing for Xapian searches."
 (defvar notdeft-new-file-data-function 'notdeft-new-file-data
   "Function for computing a new note's name and content.
 Will be called for all new notes, but not ones that are renamed
-or moved. Must return the note data as a (file-name .
-content-data) pair, where the data part can be nil for an empty
-note. The function must accept the parameters (DIR NOTENAME EXT
-DATA TITLE). DIR is a non-nil directory path for the name.
-NOTENAME may be nil if one has not been given for the new note.
-EXT is a non-nil file name extension for the note. Note content
-text DATA may be given for the new note, possibly for further
-manipulation, but will be nil for an empty note. TITLE may be nil
-if one has not been provided. Uniqueness of the constructed file
-name should be ensured if desired, as otherwise note creation
-will fail due to a naming conflict. See `notdeft-new-file-data'
-for an example implementation.")
+or copied or moved (as an existing file). Must return the note
+data as a (file-name . content-data) pair, where the data part
+can be nil for an empty note. The function must accept the
+parameters (DIR NOTENAME EXT DATA TITLE). DIR is a non-nil
+directory path for the name. NOTENAME may be nil if one has not
+been given for the new note. EXT is a non-nil file name extension
+for the note. Note content text DATA may be given for the new
+note, possibly for further manipulation, but will be nil for an
+empty note. TITLE may be nil if one has not been provided.
+Uniqueness of the constructed file name should be ensured if
+desired, as otherwise note creation will fail due to a naming
+conflict. See `notdeft-new-file-data' for an example
+implementation.")
 
 (defvar notdeft-compread-file-history nil
   "History of selected NotDeft note files.
@@ -546,7 +547,7 @@ own subdirectory."
   "Generate a new unique filename.
 Do so without being given any information about note title or
 content. Have the file have the extension EXT, and be in
-directory DIR \(their defaults are as for
+directory DIR (their defaults are as for
 `notdeft-make-filename')."
   (let (filename)
     (while (or (not filename)
@@ -1508,9 +1509,10 @@ moved, or nil if nothing was moved."
 	    old-dir))))))
 
 (defvar notdeft-previous-target nil
-  "Previous file move target NotDeft directory.
+  "Previous file move or copy target NotDeft directory.
 Local to a NotDeft mode buffer. Set to nil if `notdeft-move-file'
-has not been used to move a file.")
+or `notdeft-import-buffer' has not been used to move or copy a
+note.")
 
 ;;;###autoload
 (defun notdeft-move-file (old-file &optional whole-dir)
@@ -1562,6 +1564,53 @@ allowed."
 	    (notdeft-changed--fs
 	     'dirs (delete nil (list old-root new-root)))
 	    (message "Moved %S under root %S" moved-file chosen-root))))))))
+
+;;;###autoload
+(defun notdeft-import-buffer (&optional old-buf)
+  "Import OLD-BUF content as a note under selected NotDeft root.
+OLD-BUF must not be an existing NotDeft note buffer. If OLD-BUF
+is nil then import the `current-buffer' content. Require the
+buffer to be a file buffer with a note file extension, and just
+copy it. Query the user for a target directory from among
+`notdeft-directories'. Offer to create the chosen NotDeft root
+directory if it does not already exist. Open any imported note to
+make it ready for editing as a NotDeft note, and return its
+buffer. Otherwise return an error message."
+  (interactive)
+  (let ((old-buf (or old-buf (current-buffer))))
+    (if (not (and old-buf notdeft-directories (not (zerop (buffer-size old-buf)))))
+        (message "Nothing or nowhere to import")
+      (if (notdeft-note-buffer-p old-buf)
+          (message "Buffer %S already a note buffer" (buffer-name old-buf))
+        (let ((old-file (buffer-file-name old-buf)))
+          (if (not old-file)
+              (message "Buffer %S is not a file buffer" (buffer-name old-buf))
+            (let ((old-root (notdeft-dir-of-file old-file)))
+              (if old-root
+                  (message "File %S already under root %S" old-file old-root)
+                (let ((name (file-name-nondirectory old-file))
+                      (ext-re (notdeft-make-file-re)))
+                  (if (not (string-match-p ext-re name))
+                      (message "File %S does not have a note file extension" name)
+                    (let* ((choices (if (not notdeft-previous-target)
+		                        notdeft-directories
+	                              (notdeft-list-prefer
+	                               notdeft-directories
+	                               (lambda (dir)
+		                         (notdeft-file-equal-p dir notdeft-previous-target)))))
+	                   (chosen-root
+	                    (notdeft-select-directory-from choices "Destination directory: " t t))
+	                   (new-root
+	                    (notdeft-canonicalize-root chosen-root))
+                           (new-file (concat new-root name)))
+	              (notdeft-ensure-root new-root)
+                      (with-current-buffer old-buf
+	                (write-region nil nil new-file nil nil nil 'excl))
+	              (setq notdeft-previous-target new-root)
+	              (notdeft-changed--fs 'files (list new-file))
+                      (prog1
+	                  (notdeft-find-file new-file)
+	                (message "Imported %S under root %S" new-file chosen-root)))))))))))))
 
 ;;;###autoload
 (defun notdeft-archive-file (old-file &optional whole-dir)
@@ -1729,7 +1778,7 @@ Query for a directory with `notdeft-select-directory'."
 
 (defun notdeft-open-file-by-basename (filename)
   "Open a NotDeft file named FILENAME.
-FILENAME is a non-directory filename, with an extension \(it is
+FILENAME is a non-directory filename, with an extension (it is
 not necessarily unique). Returns the resolved path, or nil if
 none was found."
   (let ((fn (notdeft-file-by-basename filename)))
