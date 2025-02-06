@@ -822,7 +822,7 @@ static void doList(vector<string> subArgs) {
     const int pfx_len = prefix.size();
     cout << "(" << endl;
     for (Xapian::TermIterator it = db.allterms_begin(prefix), end = db.allterms_end(prefix);
-	 it != db.allterms_end(prefix); ++it) {
+	 it != end; ++it) {
       write_string_literal(cout, (*it).substr(pfx_len));
       cout << endl;
     }
