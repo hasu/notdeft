@@ -1566,17 +1566,18 @@ allowed."
 	    (message "Moved %S under root %S" moved-file chosen-root))))))))
 
 ;;;###autoload
-(defun notdeft-import-buffer (&optional old-buf)
+(defun notdeft-import-buffer (&optional old-buf other-window)
   "Import OLD-BUF content as a note under selected NotDeft root.
 OLD-BUF must not be an existing NotDeft note buffer. If OLD-BUF
-is nil then import the `current-buffer' content. Require the
-buffer to be a file buffer with a note file extension, and just
-copy it. Query the user for a target directory from among
+is nil then import `current-buffer' content. Require the buffer
+to be a file buffer with a note file extension, and just copy it.
+Query the user for a target directory from among
 `notdeft-directories'. Offer to create the chosen NotDeft root
-directory if it does not already exist. Open any imported note to
-make it ready for editing as a NotDeft note, and return its
-buffer. Otherwise return an error message."
-  (interactive)
+directory if it does not already exist. Open any imported note
+for editing as a NotDeft note, optionally in OTHER-WINDOW, and
+return its buffer object. Otherwise return an error message."
+  (interactive
+   (list nil current-prefix-arg))
   (let ((old-buf (or old-buf (current-buffer))))
     (if (not (and old-buf notdeft-directories (not (zerop (buffer-size old-buf)))))
         (message "Nothing or nowhere to import")
@@ -1609,7 +1610,7 @@ buffer. Otherwise return an error message."
 	              (setq notdeft-previous-target new-root)
 	              (notdeft-changed--fs 'files (list new-file))
                       (prog1
-	                  (notdeft-find-file new-file)
+	                  (notdeft-find-file new-file other-window other-window)
 	                (message "Imported %S under root %S" new-file chosen-root)))))))))))))
 
 ;;;###autoload
