@@ -773,7 +773,7 @@ new file."
    (notdeft-current-files
     (notdeft-find-file (car notdeft-current-files)))
    (t
-    (notdeft-sub-new-file nil nil notdeft-filter-string))))
+    (notdeft-sub--new-file nil nil notdeft-filter-string))))
 
 (defun notdeft-show-file-info (file)
   "Show information about the note FILE.

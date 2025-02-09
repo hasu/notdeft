@@ -1143,7 +1143,7 @@ content for the note. Return the filename of the created file."
 	   (goto-char (point-max))))
        file))))
 
-(defun notdeft-sub-new-file (&optional notename data title pfx)
+(defun notdeft-sub--new-file (&optional notename data title pfx)
   "Create a new note file as specified.
 Save into a file with the specified NOTENAME
 \(if NOTENAME is nil, generate a name).
@@ -1193,7 +1193,7 @@ The prefix argument PFX is as for `notdeft-new-file'.
 Query for a TITLE when invoked as a command.
 Return the filename of the created file."
   (interactive "P\nsNew title: ")
-  (notdeft-sub-new-file nil nil title pfx))
+  (notdeft-sub--new-file nil nil title pfx))
 
 ;;;###autoload
 (defun notdeft-new-file (pfx)
@@ -1205,7 +1205,7 @@ With two prefix arguments, also offer a choice of filename
 extensions when `notdeft-secondary-extensions' is non-empty.
 Return the filename of the created file."
   (interactive "P")
-  (notdeft-sub-new-file nil nil nil pfx))
+  (notdeft-sub--new-file nil nil nil pfx))
 
 (defun notdeft-note-buffer-p (&optional buffer)
   "Whether BUFFER is a NotDeft Note mode buffer.
@@ -1416,11 +1416,11 @@ with a \\[universal-argument] prefix argument."
 			    (notdeft-parse-title (buffer-string)))))
 		     (and title (notdeft-title-to-notename title))))
 		 old-name))
-	   (new-file (notdeft-sub-rename-file old-file old-name def-name)))
+	   (new-file (notdeft-sub--rename-file old-file old-name def-name)))
       (when new-file
 	(message "Renamed as %S" new-file)))))
 
-(defun notdeft-sub-rename-file (old-file old-name def-name)
+(defun notdeft-sub--rename-file (old-file old-name def-name)
   "Rename OLD-FILE with the OLD-NAME NotDeft name.
 Query for a new name, defaulting to DEF-NAME. Use OLD-FILE's
 filename extension in the new name. If the file was renamed,
@@ -1481,7 +1481,7 @@ to be the ones under NEW-DIR."
 	      (set-buffer buf)
 	      (set-visited-file-name new-file nil t))))))))
 
-(defun notdeft-sub-move-file (old-file dest-dir &optional whole-dir mkdir)
+(defun notdeft-sub--move-file (old-file dest-dir &optional whole-dir mkdir)
   "Move the OLD-FILE note file into the DEST-DIR directory.
 If OLD-FILE has its own subdirectory, then move the entire
 subdirectory, but only if WHOLE-DIR is true. If WHOLE-DIR is the
@@ -1557,7 +1557,7 @@ allowed."
 	  (message "File %S already under root %S" old-file chosen-root)
 	(notdeft-ensure-root new-root)
 	(let ((moved-file
-	       (notdeft-sub-move-file old-file new-root (or whole-dir 'ask) t)))
+	       (notdeft-sub--move-file old-file new-root (or whole-dir 'ask) t)))
 	  (if (not moved-file)
 	      (message "Did not move %S" old-file)
 	    (setq notdeft-previous-target new-root)
@@ -1634,7 +1634,7 @@ require interactive confirmation unless WHOLE-DIR is non-nil or a
 		  (concat old-root
 			  (file-name-as-directory notdeft-archive-directory)))
 		 (moved-file
-		  (notdeft-sub-move-file old-file new-dir (or whole-dir 'ask) t)))
+		  (notdeft-sub--move-file old-file new-dir (or whole-dir 'ask) t)))
 	    (if (not moved-file)
 		(message "Did not archive %S" old-file)
 	      (notdeft-changed--fs 'dirs (list old-root))
