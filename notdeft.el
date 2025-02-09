@@ -212,6 +212,7 @@
 (require 'notdeft-base)
 (require 'notdeft-util)
 (require 'notdeft-xapian)
+(require 'subr-x)
 
 ;;; Customization
 
@@ -1145,16 +1146,13 @@ content for the note. Return the filename of the created file."
 
 (defun notdeft-sub--new-file (&optional notename data title pfx)
   "Create a new note file as specified.
-Save into a file with the specified NOTENAME
-\(if NOTENAME is nil, generate a name).
-Save DATA as the note content.
-Use the specified note TITLE,
-possibly affecting note naming or content.
-With a PFX >= '(4), query for a target directory;
-otherwise default to the result of `notdeft-get-directory'.
-With a PFX >= '(16), query for a filename extension;
-otherwise default to `notdeft-extension'.
-Return the name of the new file."
+Save into a file with the specified NOTENAME, generating a name
+if NOTENAME is nil. Save DATA as the note content. Use the
+specified note TITLE, possibly affecting note naming or content.
+With a PFX >= 4, query for a target directory; otherwise default
+to the result of `notdeft-get-directory'. With a PFX >= 16, query
+for a filename extension; otherwise default to
+`notdeft-extension'. Return the name of the new file."
   (let ((pfx (prefix-numeric-value pfx)))
     (notdeft-create-file
       (and (>= pfx 4) 'ask)
@@ -1420,19 +1418,87 @@ with a \\[universal-argument] prefix argument."
       (when new-file
 	(message "Renamed as %S" new-file)))))
 
+(defun notdeft-plist-get (plist property default)
+  "From PLIST get PROPERTY value, or DEFAULT value."
+  (let ((x (plist-member plist property)))
+    (if x (cadr x) default)))
+
+(defvar notdeft-notename-history nil
+  "History of `notdeft-read-notename' notenames.
+These are without directory path or extension.")
+
+(defvar notdeft-notename-filename-history nil
+  "History of `notdeft-read-notename' notenames or filenames.
+Thse are without directory path, but possibly with a file name
+extension.")
+
+(defun notdeft-read-notename (&rest options)
+  "Prompt the user for a new notename.
+OPTIONS may be given as a plist, including a PROMPT and an
+INITIAL value. If INITIAL is nil then try using any filename of
+OLD-FILE or OLD-BUF, or otherwise possibly USE-TITLE of OLD-BUF
+to derive a notename. For recording history use the variable
+`notdeft-notename-history', or with a non-nil ALLOW-EXT instead
+use `notdeft-notename-filename-history'. Return the entered name,
+or nil if no or empty input was given. ALLOW-EMPTY input only if
+requested, otherwise insist on non-blank input."
+  (let* ((allow-ext (plist-get options :allow-ext))
+         (prompt
+          (or (plist-get options :prompt)
+              (format "Note name (%s): "
+                      (if allow-ext
+                          "optionally with extension"
+                        "without extension"))))
+         (initial
+          (or
+           (plist-get options :initial)
+           (when-let ((pn (plist-get options :old-file))
+                      (fn (file-name-nondirectory pn)))
+             (if allow-ext fn (file-name-sans-extension fn)))
+           (when-let ((buf (plist-get options :old-buf)))
+             (if-let ((pn (buffer-file-name buf))
+                      (fn (file-name-nondirectory pn)))
+                 (if allow-ext fn (file-name-sans-extension fn))
+               (when-let (((plist-get options :use-title))
+                          (content
+                           (with-current-buffer buf
+                             (buffer-string)))
+                          (title (notdeft-parse-title content)))
+                 (notdeft-title-to-notename title))))))
+         (history (if allow-ext
+                      'notdeft-notename-filename-history
+                    'notdeft-notename-history))
+         (read (lambda ()
+                 (notdeft-chomp-nullify
+	          (read-string
+                   prompt ;; PROMPT
+                   initial ;; INITIAL-INPUT
+	           (if initial
+                       (cons history 1)
+                     history) ;; HISTORY
+	           nil ;; DEFAULT-VALUE
+	           t ;; INHERIT-INPUT-METHOD
+                   )))))
+    (when initial
+      (set history (cons initial (symbol-value history))))
+    (let ((new-name
+           (if (plist-get options :allow-empty)
+               (funcall read)
+             (let (name)
+               (while (not name)
+                 (setq name (funcall read)))
+               name))))
+      new-name)))
+
 (defun notdeft-sub--rename-file (old-file old-name def-name)
   "Rename OLD-FILE with the OLD-NAME NotDeft name.
 Query for a new name, defaulting to DEF-NAME. Use OLD-FILE's
 filename extension in the new name. If the file was renamed,
 return the new filename, and otherwise return nil."
-  (let* ((history (list def-name))
-	 (new-name
-	  (read-string
-	   (concat "Rename " old-name " to (without extension): ")
-	   (car history) ;; INITIAL-INPUT
-	   '(history . 1) ;; HISTORY
-	   nil ;; DEFAULT-VALUE
-	   ))
+  (let* ((new-name
+          (notdeft-read-notename
+           :prompt (concat "Rename " old-name " to (without extension): ")
+           :initial def-name))
 	 (new-file
 	  (notdeft-make-filename new-name
 	    (file-name-extension old-file)
@@ -1569,13 +1635,16 @@ allowed."
 (defun notdeft-import-buffer (&optional old-buf other-window)
   "Import OLD-BUF content as a note under selected NotDeft root.
 OLD-BUF must not be an existing NotDeft note buffer. If OLD-BUF
-is nil then import `current-buffer' content. Require the buffer
-to be a file buffer with a note file extension, and just copy it.
-Query the user for a target directory from among
-`notdeft-directories'. Offer to create the chosen NotDeft root
-directory if it does not already exist. Open any imported note
-for editing as a NotDeft note, optionally in OTHER-WINDOW, and
-return its buffer object. Otherwise return an error message."
+is nil then import `current-buffer' content. If the buffer is a
+file buffer with a note file extension, then offer to use that
+filename for the imported note, and in any case ask the user to
+confirm the destination notename and extension. Query the user
+for a target directory from among `notdeft-directories'. Offer to
+create the chosen NotDeft root directory if it does not already
+exist. Open any imported note for editing as a NotDeft note,
+optionally in OTHER-WINDOW, and return its buffer object.
+Otherwise return an error message. A \\[universal-argument]
+prefix argument enables the OTHER-WINDOW option."
   (interactive
    (list nil current-prefix-arg))
   (let ((old-buf (or old-buf (current-buffer))))
@@ -1583,35 +1652,48 @@ return its buffer object. Otherwise return an error message."
         (message "Nothing or nowhere to import")
       (if (notdeft-note-buffer-p old-buf)
           (message "Buffer %S already a note buffer" (buffer-name old-buf))
-        (let ((old-file (buffer-file-name old-buf)))
-          (if (not old-file)
-              (message "Buffer %S is not a file buffer" (buffer-name old-buf))
-            (let ((old-root (notdeft-dir-of-file old-file)))
-              (if old-root
-                  (message "File %S already under root %S" old-file old-root)
-                (let ((name (file-name-nondirectory old-file))
-                      (ext-re (notdeft-make-file-re)))
-                  (if (not (string-match-p ext-re name))
-                      (message "File %S does not have a note file extension" name)
-                    (let* ((choices (if (not notdeft-previous-target)
-		                        notdeft-directories
-	                              (notdeft-list-prefer
-	                               notdeft-directories
-	                               (lambda (dir)
-		                         (notdeft-file-equal-p dir notdeft-previous-target)))))
-	                   (chosen-root
-	                    (notdeft-select-directory-from choices "Destination directory: " t t))
-	                   (new-root
-	                    (notdeft-canonicalize-root chosen-root))
-                           (new-file (concat new-root name)))
-	              (notdeft-ensure-root new-root)
-                      (with-current-buffer old-buf
-	                (write-region nil nil new-file nil nil nil 'excl))
-	              (setq notdeft-previous-target new-root)
-	              (notdeft-changed--fs 'files (list new-file))
-                      (prog1
-	                  (notdeft-find-file new-file other-window other-window)
-	                (message "Imported %S under root %S" new-file chosen-root)))))))))))))
+        (let* ((old-file (buffer-file-name old-buf))
+               (old-root (and old-file (notdeft-dir-of-file old-file))))
+          (if old-root
+              (message "File %S already under root %S" old-file old-root)
+            (let* ((ext-re (notdeft-make-file-re))
+                   (old-has-ext (when old-file
+                                  (string-match-p ext-re old-file)))
+                   (prompt (if old-has-ext
+                               "Destination note name (optionally with file name extension): "
+                             "Destination note name (without extension): "))
+                   (read-name
+                    (notdeft-read-notename
+                     :prompt prompt
+                     :old-file old-file
+                     :old-buf old-buf
+                     :allow-ext old-has-ext
+                     :use-title t))
+                   (new-name
+                    (if (and old-has-ext
+                             (string-match-p ext-re read-name))
+                        read-name
+                      (concat read-name "." (notdeft-read-extension))))
+                   (root-choices
+                    (if (not notdeft-previous-target)
+		        notdeft-directories
+	              (notdeft-list-prefer
+	               notdeft-directories
+	               (lambda (dir)
+		         (notdeft-file-equal-p dir notdeft-previous-target)))))
+	           (chosen-root
+	            (notdeft-select-directory-from root-choices "Destination directory: " t t))
+	           (new-root
+	            (notdeft-canonicalize-root chosen-root))
+                   (new-file (concat new-root new-name)))
+	      (notdeft-ensure-root new-root)
+              (with-current-buffer old-buf
+	        (write-region nil nil new-file nil nil nil 'excl))
+	      (setq notdeft-previous-target new-root)
+	      (notdeft-changed--fs 'files (list new-file))
+              (prog1
+	          (notdeft-find-file new-file other-window other-window)
+	        (message "Imported %S under root %S" new-file chosen-root)))))))))
 
 ;;;###autoload
 (defun notdeft-archive-file (old-file &optional whole-dir)
@@ -1818,20 +1900,19 @@ Some implementations of `notdeft-select-note-file-function' may
 check the value of this variable. If it is non-nil it should be a
 string to offer as the search query to use..")
 
-(defun notdeft-xapian-compread-search (&optional query rich open)
+(defun notdeft-xapian-compread-search (&optional query edit open)
   "Search for a file matching a Xapian query.
 If a QUERY is provided, then use it as is. Otherwise offer
 `notdeft-select-note-file-initial-query' for interactive editing,
-accounting for `notdeft-xapian-query-history'. If RICH is non-nil
+accounting for `notdeft-xapian-query-history'. If EDIT is non-nil
 then offer interactive query editing in any case. If there are
 any matches in the query search results, present a choice list of
-files with `notdeft-compread-file'. Offer additional options and
-actions if appropriate when RICH is non-nil. Return the path of
-the chosen file, or nil if nothing was found. Optionally OPEN any
-selected file with `notdeft-find-file'."
+files with `notdeft-compread-file'. Return the path of the chosen
+file, or nil if nothing was found. Optionally OPEN any selected
+file with `notdeft-find-file'."
   (notdeft-with-xapian
     (let ((query
-           (if (and query (not rich))
+           (if (and query (not edit))
                query
 	     (notdeft-xapian-read-query
               (or query notdeft-select-note-file-initial-query)))))
@@ -1846,11 +1927,11 @@ selected file with `notdeft-find-file'."
                 (when (and file open)
                   (notdeft-find-file file))))))))))
 
-(defun notdeft-xapian-compread-search-find-file (&optional query rich)
+(defun notdeft-xapian-compread-search-find-file (&optional query edit)
   "Perform a Xapian search to find and open a file.
-The arguments QUERY and RICH are as for
+The arguments QUERY and EDIT are as for
 `notdeft-xapian-compread-search'."
-  (notdeft-xapian-compread-search query rich t))
+  (notdeft-xapian-compread-search query edit t))
 
 (defvar notdeft-open-search-function #'notdeft-xapian-compread-search-find-file
   "Default function to use for searching and presenting results.
@@ -1858,14 +1939,13 @@ The function must accept at least the positional
 arguments (QUERY:string-or-null-p RICH:booleanp), where QUERY is
 an optional search string. The return value is undefined. If a
 QUERY is not provided, then the function must ask for what to
-search. RICH is a boolean flag that is a hint about whether to
-interactively offer query or result presentation options. It is
-nonetheless up to the function to decide how to present the
-results, if at all, and under what conditions. This is just the
-default way of querying for and presenting results, and some
-commands (e.g., `notdeft-open-query' and
-`notdeft-search-find-file') always present their results in
-a specific way without consulting this setting.")
+search. RICH is a boolean flag that is a hint about whether the
+function may interactively offer non-default query or result
+presentation options. This function only defines the default way
+of querying for and presenting results, and some commands (e.g.,
+`notdeft-open-query' and `notdeft-search-find-file') always
+present their results in a specific way without consulting this
+setting.")
 
 (defvar notdeft-search-find-file-function #'notdeft-xapian-compread-search-find-file
   "Function to use by default for search and `find-file'.
@@ -1881,15 +1961,16 @@ which is used generally when another operation needs a note file
 to be selected, probably interactively. The function must accept
 at least the positional arguments (QUERY:string-or-null-p
 RICH:booleanp), where QUERY is an optional search string, and
-RICH asks for richer functionality. The function must return the
-full pathname of the selected file, or nil if none. For example
-implementations, see `notdeft-compread-select-note-file' and
+RICH consents to offers of non-default behavior. The function
+must return the full pathname of the selected file, or nil if
+none. For example implementations, see
+`notdeft-compread-select-note-file' and
 `notdeft-xapian-compread-search'.")
 
-(defun notdeft-compread-select-note-file (&optional _rich)
+(defun notdeft-compread-select-note-file (&rest _arguments)
   "Offer a choice list of all notes.
 Return a file name for the selected note. Return nil if there are
-no notes from which to select. The _RICH argument is ignored."
+no notes from which to select. Any _ARGUMENTS are ignored."
   (let ((files (notdeft-make-note-file-list))
         (prompt "NotDeft note: "))
     (notdeft-compread-file files prompt)))
@@ -1902,7 +1983,7 @@ RICH mode of selection. Optionally honor related configuration
 options such as `notdeft-select-note-file-initial-query'."
   (if (and notdeft-select-note-file-function
 	   (or rich notdeft-select-note-file-by-search))
-      (funcall notdeft-select-note-file-function rich)
+      (funcall notdeft-select-note-file-function nil rich)
     (notdeft-compread-select-note-file)))
 
 (defun notdeft-string-from-region (&optional no-region)
