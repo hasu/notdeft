@@ -59,6 +59,11 @@ string, or nil if no non-whitespace description was provided."
 NAME should be a non-directory file name with extension."
   (org-link-make-string (concat "deft:" name) desc))
 
+(defun notdeft-make-notdeft-link (query &optional desc)
+  "Turn QUERY and DESC into a \"notdeft:\" link.
+QUERY should be a Xapian search query."
+  (org-link-make-string (concat "notdeft:" query) desc))
+
 ;;;###autoload
 (defun notdeft-org-store-deft-link ()
   "Store a \"deft:\" link for the current note.
@@ -179,27 +184,36 @@ present results in a RICH manner. This defines the opening of Org
   (notdeft-open-search query rich))
 
 ;;;###autoload
-(defun notdeft-org-store-notdeft-link (&optional select)
+(defun notdeft-org-store-notdeft-link ()
   "Store the current NotDeft search as an Org link.
 Use `org-store-link' to invoke this function. If invoked in
 `notdeft-mode', then store a link to the current Xapian query, if
-any. In other modes use the latest entry in
-`notdeft-xapian-query-history', if any. With a non-nil SELECT
-argument let the user choose interactively from among the history
-entries, regardless of mode."
-  (let* ((query (cond
-                 (select
-                  (ido-completing-read "Query: " notdeft-xapian-query-history nil t))
-                 ((and (eq major-mode 'notdeft-mode)
-                       (boundp 'notdeft-xapian-query))
-                  (eval 'notdeft-xapian-query t))
-                 (t
-                  (car notdeft-xapian-query-history))))
+any. In other modes return nil."
+  (let* ((query (and (eq major-mode 'notdeft-mode)
+                     (boundp 'notdeft-xapian-query)
+                     (symbol-value 'notdeft-xapian-query)))
          (query (notdeft-chomp-nullify query)))
     (when query
       (org-link-store-props
        :type "notdeft"
        :link (concat "notdeft:" query)))))
+
+;;;###autoload
+(defun notdeft-org-insert-notdeft-link-from-history (&optional direct)
+  "Insert a past Xapian search as an Org link.
+Let the user select an entry from `notdeft-xapian-query-history',
+if any. Also ask for a description for the \"notdeft:\" link. If
+DIRECT is non-nil or when called with \\[universal-argument] just
+use the latest history entry, without asking for a description."
+  (interactive "*P")
+  (when-let ((query (if direct
+                        (car notdeft-xapian-query-history)
+                      (ido-completing-read "Query: " notdeft-xapian-query-history nil t)))
+             (query (notdeft-chomp-nullify query)))
+    (when query
+      (let ((desc (unless direct
+                    (notdeft-org-read-link-description))))
+        (insert (notdeft-make-notdeft-link query desc))))))
 
 ;;;###autoload
 (defun notdeft-org-search-for-heading (&optional as-phrase)
