@@ -47,17 +47,17 @@ namespace NotDeft {
     }
 
   protected:
-    Error(const char* type, const string msg = string(), int errno_ = 0)
+    explicit Error(const char* type, const string msg = string(), int errno_ = 0)
       : type(type), msg(msg), sys_errno(errno_) {}
   };
 
   struct ReadError : public Error {
-    ReadError(const string msg = string())
+    explicit ReadError(const string msg = string())
       : Error("NotDeft::ReadError", msg) {}
   };
 
   struct IoError : public Error {
-    IoError(const string msg, int errno_)
+    explicit IoError(const string msg, int errno_)
       : Error("NotDeft::IoError", msg, errno_) {}
   };
 }
@@ -339,8 +339,8 @@ struct Op {
   bool whole_dir;
   string dir;
   vector<string> files;
-  Op() {}
-  explicit Op(const string& d) : whole_dir(true), dir(d) {}
+
+  explicit Op(const string& d, bool whole = true) : whole_dir(whole), dir(d) {}
 };
 
 static bool parse_ops(std::istream& in, vector<Op>& lst) {
@@ -363,9 +363,7 @@ static bool parse_ops(std::istream& in, vector<Op>& lst) {
       int count = std::stoi(count_s);
       if (count < 0)
 	return false; // expected non-negative integer
-      Op op;
-      op.whole_dir = false;
-      op.dir = dir;
+      Op op(dir, false);
       string file;
       for ( ; count > 0; count--) {
 	if (!getline(in, file))
