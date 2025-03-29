@@ -1894,28 +1894,28 @@ If non-nil, use the specified PROMPT. Use
 path of the selected note file, if any, or nil otherwise."
   (funcall notdeft-compread-file-function files prompt))
 
-(defvar notdeft-select-note-file-initial-query nil
+(defvar notdeft-initial-query nil
   "A note file selection option.
-Some implementations of `notdeft-select-note-file-function' may
-check the value of this variable. If it is non-nil it should be a
-string to offer as the search query to use..")
+Some commands asking the user for a search query may check the
+value of this variable. If it is non-nil it should be a string to
+offer for editing as the search query.")
 
 (defun notdeft-xapian-compread-search (&optional query edit open)
   "Search for a file matching a Xapian query.
 If a QUERY is provided, then use it as is. Otherwise offer
-`notdeft-select-note-file-initial-query' for interactive editing,
-accounting for `notdeft-xapian-query-history'. If EDIT is non-nil
-then offer interactive query editing in any case. If there are
-any matches in the query search results, present a choice list of
-files with `notdeft-compread-file'. Return the path of the chosen
-file, or nil if nothing was found. Optionally OPEN any selected
-file with `notdeft-find-file'."
+`notdeft-initial-query' for interactive editing, accounting for
+`notdeft-xapian-query-history'. If EDIT is non-nil then offer
+interactive query editing in any case. If there are any matches
+in the query search results, present a choice list of files with
+`notdeft-compread-file'. Return the path of the chosen file, or
+nil if nothing was found. Optionally OPEN any selected file with
+`notdeft-find-file'."
   (notdeft-with-xapian
     (let ((query
            (if (and query (not edit))
                query
 	     (notdeft-xapian-read-query
-              (or query notdeft-select-note-file-initial-query)))))
+              (or query notdeft-initial-query)))))
       (when query
 	(let* ((notdeft-xapian-max-results
                 (or notdeft-select-note-file-max-choices notdeft-xapian-max-results))
@@ -1951,8 +1951,8 @@ setting.")
   "Function to use by default for search and `find-file'.
 The function is required to call `notdeft-find-file' for any
 selected file. Its signature must be as for
-`notdeft-open-search-function', namely
-\(QUERY:string-or-null-p RICH:booleanp) -> anything.")
+`notdeft-open-search-function', namely (QUERY:string-or-null-p
+RICH:booleanp) -> anything.")
 
 (defvar notdeft-select-note-file-function #'notdeft-xapian-compread-search
   "Function for selecting a note file.
@@ -1960,11 +1960,11 @@ This variable defines the behavior of `notdeft-select-note-file',
 which is used generally when another operation needs a note file
 to be selected, probably interactively. The function must accept
 at least the positional arguments (QUERY:string-or-null-p
-RICH:booleanp), where QUERY is an optional search string, and
-RICH consents to offers of non-default behavior. The function
-must return the full pathname of the selected file, or nil if
-none. For example implementations, see
-`notdeft-compread-select-note-file' and
+RICH:booleanp), where QUERY is an optional and possibly
+applicable search string, and RICH consents to offers of
+non-default behavior. The function must return the full pathname
+of the selected file, or nil if none. For example
+implementations, see `notdeft-compread-select-note-file' and
 `notdeft-xapian-compread-search'.")
 
 (defun notdeft-compread-select-note-file (&rest _arguments)
@@ -1980,7 +1980,7 @@ no notes from which to select. Any _ARGUMENTS are ignored."
 Allow choosing from all notes in the collection. Return the file
 name of the chosen note, or nil for none. Optionally offer a more
 RICH mode of selection. Optionally honor related configuration
-options such as `notdeft-select-note-file-initial-query'."
+options such as `notdeft-initial-query'."
   (if (and notdeft-select-note-file-function
 	   (or rich notdeft-select-note-file-by-search))
       (funcall notdeft-select-note-file-function nil rich)
@@ -2004,7 +2004,7 @@ prefix argument enable the RICH option, and possibly use any
 active region as INITIAL input if prompting for a search query."
   (interactive
    (list nil current-prefix-arg (notdeft-string-from-region)))
-  (let ((notdeft-select-note-file-initial-query initial))
+  (let ((notdeft-initial-query initial))
     (funcall notdeft-open-search-function query rich)))
 
 ;;;###autoload
@@ -2018,7 +2018,7 @@ and possibly use any active region as INITIAL input if prompting
 for a search query."
   (interactive
    (list nil current-prefix-arg (notdeft-string-from-region)))
-  (let ((notdeft-select-note-file-initial-query initial))
+  (let ((notdeft-initial-query initial))
     (funcall notdeft-search-find-file-function query rich)))
 
 (defalias 'notdeft-query-select-find-file
@@ -2035,7 +2035,7 @@ input if prompting for a search query."
   (interactive
    (list nil current-prefix-arg (notdeft-string-from-region)))
   (let ((notdeft-compread-file-function #'notdeft-ido-compread-file)
-        (notdeft-select-note-file-initial-query initial))
+        (notdeft-initial-query initial))
     (notdeft-xapian-compread-search-find-file query rich)))
 
 ;;;###autoload

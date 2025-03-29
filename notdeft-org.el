@@ -103,7 +103,7 @@ NOTENAME, pick any one of them for deriving a description."
 	    (file
 	     ;; Select note before prompting for any description.
 	     ;; Provide any region text as a selection hint.
-	     (let ((notdeft-select-note-file-initial-query desc)
+	     (let ((notdeft-initial-query desc)
                    (notdeft-xapian-order-by-time nil))
 	       (notdeft-select-note-file)))
 	    (desc
