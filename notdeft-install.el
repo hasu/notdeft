@@ -24,8 +24,8 @@
 	       (locate-library "notdeft-install"))))
     (let ((generated-autoload-file
 	   (expand-file-name "notdeft-autoloads.el" home)))
-      ;; From Emacs 28.1 should instead use `make-directory-autoloads'.
-      (update-directory-autoloads home))
+      ;; Emacs 28.1 or later is required for `make-directory-autoloads'.
+      (make-directory-autoloads home generated-autoload-file))
     (load "notdeft-autoloads.el" nil nil t)))
 
 (defun notdeft-install-bytecode (&optional force)

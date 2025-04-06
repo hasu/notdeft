@@ -5,7 +5,7 @@
 ;; Maintainer: Tero Hasu <tero@hasu.is>
 ;; Homepage: https://tero.hasu.is/notdeft/
 ;; Keywords: files text notes search
-;; Package-Requires: ((emacs "24.3") (org "9.3"))
+;; Package-Requires: ((emacs "28.1") (org "9.3"))
 
 ;; This file is not part of GNU Emacs.
 
