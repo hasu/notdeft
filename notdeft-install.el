@@ -13,19 +13,29 @@
 
 ;;; Code:
 
-(require 'autoload)
 (require 'bytecomp)
 
 (declare-function notdeft-xapian-make-program "notdeft-xapian-make")
+
+(eval-when-compile
+  (defmacro notdeft-static-if (cnd thn els)
+    "Behave like `static-if'.
+Check CND at expansion time and emit either THN or ELS."
+    (declare (indent 2))
+    (if (eval cnd lexical-binding) thn els)))
 
 (defun notdeft-install-autoloads ()
   "Generate NotDeft autoloads and load them."
   (let ((home (file-name-directory
 	       (locate-library "notdeft-install"))))
-    (let ((generated-autoload-file
+    (let ((output-file
 	   (expand-file-name "notdeft-autoloads.el" home)))
-      ;; Emacs 28.1 or later is required for `make-directory-autoloads'.
-      (make-directory-autoloads home generated-autoload-file))
+      ;; Emacs 28.1 or later is required for
+      ;; `make-directory-autoloads'. That in turn is already
+      ;; deprecated in Emacs 29.1 in favor of `loaddefs-generate'.
+      (notdeft-static-if (fboundp 'loaddefs-generate)
+          (loaddefs-generate home output-file)
+        (make-directory-autoloads home output-file)))
     (load "notdeft-autoloads.el" nil nil t)))
 
 (defun notdeft-install-bytecode (&optional force)
@@ -65,7 +75,7 @@ files appear to be up-to-date."
 ;;; notdeft-install.el ends here
 
 ;; NotDeft, a note manager for Emacs
-;; Copyright (C) 2020  Tero Hasu
+;; Copyright (C) 2020-2025  Tero Hasu
 ;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
