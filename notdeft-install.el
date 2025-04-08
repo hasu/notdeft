@@ -44,19 +44,28 @@ Optionally FORCE byte-compilation even when existing bytecode
 files appear to be up-to-date."
   (let ((dir (file-name-directory
 	      (locate-library "notdeft-install"))))
-    (notdeft-install--byte-compile dir "./" t force)))
+    (notdeft-install--byte-compile dir force)))
 
-(defun notdeft-install--byte-compile (dir subdir must force)
-  "Byte-compile NotDeft sources in DIR SUBDIR.
-If so indicated, the directory MUST exist. Optionally FORCE the
-compilation."
-  (let ((home (expand-file-name subdir dir)))
-    (when (or must (file-exists-p home))
-      (let ((files (directory-files home nil "^notdeft.*\\.el$")))
-	(dolist (file files)
-	  (unless (member file '("notdeft-autoloads.el"))
-	    (let ((file (concat home file)))
-	      (byte-recompile-file file force 0))))))))
+(defun notdeft-install--byte-compile (dir force)
+  "Byte-compile NotDeft sources in DIR.
+The directory and all the expected source files must exist. Optionally
+FORCE the compilation."
+  (let ((files '("notdeft-base.el"
+                 "notdeft-util.el"
+                 "notdeft-xapian.el"
+                 "notdeft.el"
+                 "notdeft-global.el"
+                 "notdeft-org.el"
+                 "notdeft-org9.el"
+                 "notdeft-xapian-make.el"
+                 "notdeft-install.el"
+                 "notdeft-mode.el"
+                 "notdeft-path.el"
+                 "notdeft-develop.el"
+                 "notdeft-command.el")))
+    (dolist (file files)
+      (let ((file (expand-file-name file dir)))
+        (byte-recompile-file file force 0)))))
 
 ;;;###autoload
 (defun notdeft-install (&optional force)
