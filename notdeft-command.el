@@ -1,0 +1,230 @@
+;;; notdeft-command.el --- NotDeft commands with Transient menus  -*- lexical-binding: t; -*-
+
+;; Author: Tero Hasu <tero@hasu.is>
+;; See end of file for licensing information.
+
+;;; Commentary:
+;; This feature provides a higher-level `notdeft-search' command that
+;; uses a Transient menu of options and actions to execute, so that it
+;; is not necessary to remember all the available options and actions.
+;;
+;; The command can also be used as a `notdeft-open-search-function',
+;; although due to its interactive and heavy duty nature it may not be
+;; particularly fit for the purpose.
+;;
+;; This feature requires Transient 0.5.0 or later, for the
+;; refresh-suffixes support.
+
+;;; Code:
+
+(require 'notdeft)
+(require 'notdeft-mode)
+(require 'subr-x)
+(require 'transient)
+
+(defvar-local notdeft-search-query nil
+  "Current `notdeft-search' query, if any.
+Used to track the search query through transient execution,
+locally for a buffer.")
+
+(defun notdeft-value-faced (str)
+  "STR with `transient-value' face."
+  (when str
+    (propertize str 'face 'transient-value)))
+
+(defun notdeft-search-query-description ()
+  "Current `notdeft-search' query string description."
+  (if notdeft-search-query
+      (propertize notdeft-search-query 'face 'transient-value)
+    (propertize "<unset>" 'face 'transient-inactive-value)))
+
+(transient-define-suffix notdeft-search-query-display ()
+  "Show info field showing current search query."
+  :class 'transient-information
+  :description #'notdeft-search-query-description
+  (interactive))
+
+(transient-define-suffix notdeft-search-query-edit ()
+  "A `notdeft-search' query argument."
+  :transient t
+  (interactive)
+  ;; We rely on :refresh-suffixes t refreshing the transient.
+  ;; Alternatively we could use the private `transient--redisplay' API.
+  (setq notdeft-search-query (notdeft-xapian-read-query notdeft-search-query)))
+
+(transient-define-suffix notdeft-search-query-clear ()
+  "Clear `notdeft-search' query argument."
+  :transient t
+  :if-non-nil 'notdeft-search-query
+  (interactive)
+  (setq notdeft-search-query nil))
+
+(transient-define-suffix notdeft-search-query-add-tag ()
+  "Add \"tag:\" for selected keyword."
+  :transient t
+  (interactive)
+  (when-let ((keywords (notdeft-xapian-list-all-keywords))
+             (keyword (completing-read "Keyword: " keywords)))
+    (let ((tag (concat "tag:" keyword))
+          (query notdeft-search-query))
+      (setq notdeft-search-query
+            (if query (concat tag " AND " query) tag)))))
+
+(defun notdeft-sample-string (str)
+  "Return STR or a shorter sample of it."
+  (when str
+    (let ((len (length str)))
+      (if (<= len 15)
+          str
+        (concat (substring str 0 7)
+                (string 8230)
+                (substring str (- len 7)))))))
+
+(defun notdeft-search-use-region-description ()
+  "Return `notdeft-search-use-region' description."
+  (let ((str (notdeft-string-from-region)))
+    (concat "Use region string"
+            (if str
+                (concat " \"" (notdeft-value-faced (notdeft-sample-string str)) "\"")
+              "")
+            " as query")))
+
+(transient-define-suffix notdeft-search-use-region ()
+  "Use active region as `notdeft-search-query'."
+  :transient t
+  :if-non-nil 'mark-active
+  :description #'notdeft-search-use-region-description
+  (interactive)
+  (setq notdeft-search-query (notdeft-chomp-nullify (notdeft-string-from-region))))
+
+(transient-define-suffix notdeft-search-use-title ()
+  "Use note title as `notdeft-search-query'."
+  :transient t
+  :if #'notdeft-note-buffer-p
+  :description "Use note title as query"
+  (interactive)
+  (setq notdeft-search-query (notdeft-buffer-title)))
+
+(defun notdeft-search-arguments ()
+  "List `notdeft-search' arguments.
+The value of `notdeft-search-query' is not included."
+  (transient-args 'notdeft-search))
+
+(defun notdeft-search-option-enabled-p (option)
+  "Whether a `notdeft-search' OPTION is enabled."
+  (member option (notdeft-search-arguments)))
+
+(defun notdeft-search-order-by ()
+  "Return an --order-by value symbol."
+  (when-let ((val (transient-arg-value "--order-by=" (notdeft-search-arguments))))
+    (intern val)))
+
+(transient-define-suffix notdeft-show-search-arguments ()
+  "Show `notdeft-search' arguments in CLI style.
+Do that by showing a `message'."
+  :transient t
+  (interactive)
+  (message "Search parameters: %S"
+           (append (transient-args 'notdeft-search)
+                   (if notdeft-search-query (list notdeft-search-query) nil))))
+
+(transient-define-suffix notdeft-search-refresh ()
+  "Refresh, with a completion message."
+  :transient t
+  (interactive)
+  (notdeft-refresh)
+  (message "Search index refreshed"))
+
+(transient-define-suffix notdeft-search-default-find-file (query order-by)
+  "Transient adapter for `notdeft-search-find-file'."
+  (interactive
+   (list notdeft-search-query
+         (notdeft-search-order-by)))
+  (when query
+    (notdeft-search-find-file :query query :order-by order-by)))
+
+(transient-define-suffix notdeft-search-ido-find-file (query order-by)
+  "Transient adapter for `notdeft-xapian-ido-search-find-file'."
+  (interactive
+   (list notdeft-search-query
+         (notdeft-search-order-by)))
+  (when query
+    (notdeft-xapian-ido-search-find-file :query query :order-by order-by)))
+
+(transient-define-suffix notdeft-search-lucky-find-file (query order-by)
+  "Transient adapter for `notdeft-lucky-find-file'."
+  (interactive
+   (list notdeft-search-query
+         (notdeft-search-order-by)))
+  (when query
+    (notdeft-lucky-find-file :query query :order-by order-by)))
+
+(transient-define-suffix notdeft-search-open-query (query order-by new-buffer)
+  "Transient adapter for `notdeft-open-search'."
+  (interactive
+   (list notdeft-search-query
+         (notdeft-search-order-by)
+         (notdeft-search-option-enabled-p "--new-buffer")))
+  (when query
+    (notdeft-open-search :query query :order-by order-by :new-buffer new-buffer)))
+
+(transient-define-suffix notdeft-search-notdeft-mode-open-query (query order-by new-buffer)
+  "Transient adapter for `notdeft-mode-open-search'."
+  (interactive
+   (list notdeft-search-query
+         (notdeft-search-order-by)
+         (notdeft-search-option-enabled-p "--new-buffer")))
+  (when query
+    (notdeft-mode-open-search :query query :order-by order-by :new-buffer new-buffer)))
+
+;;;###autoload (autoload 'notdeft-search "notdeft-command" nil t)
+(transient-define-prefix notdeft-search (&rest arguments)
+  "Search for files matching a query.
+Accept ARGUMENTS as for `notdeft-open-search', but mostly ignore
+them, instead letting the user choose interactively from a
+variety of search and result presentation options and actions."
+  :refresh-suffixes t
+  ["Options"
+   ("-b" "Order results by" "--order-by=" :choices (relevance time name))
+   ("-n" "Create new NotDeft buffer" "--new-buffer")]
+  ["Query"
+   (notdeft-search-query-display)
+   ("c" "Clear query" notdeft-search-query-clear)
+   ("e" "Edit query" notdeft-search-query-edit)
+   ("k" "Require keyword" notdeft-search-query-add-tag)
+   ("r" notdeft-search-use-region)
+   ("t" notdeft-search-use-title)]
+  ["Action"
+   ("f" "Select file" notdeft-search-default-find-file)
+   ("g" "Refresh first" notdeft-search-refresh)
+   ("i" "Select file with Ido" notdeft-search-ido-find-file)
+   ("l" "Lucky search" notdeft-search-lucky-find-file)
+   ("o" "Open query in NotDeft buffer" notdeft-search-notdeft-mode-open-query)
+   ("p" "Show current parameters" notdeft-show-search-arguments)
+   ("v" "Open query" notdeft-search-open-query)]
+  (interactive)
+  ;; We could also try falling back to `notdeft-string-from-region'
+  ;; here, but it's also quick to press "r" to fill it in.
+  (setq notdeft-search-query (or (plist-get arguments :query)
+                                 (plist-get arguments :initial-query)))
+  (transient-setup 'notdeft-search))
+
+(provide 'notdeft-command)
+
+;;; notdeft-command.el ends here
+
+;; NotDeft, a note manager for Emacs
+;; Copyright (C) 2025  Tero Hasu
+;;
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
