@@ -5,7 +5,7 @@
 ;; Maintainer: Tero Hasu <tero@hasu.is>
 ;; Homepage: https://tero.hasu.is/notdeft/
 ;; Keywords: files text notes search
-;; Package-Requires: ((emacs "28.1") (org "9.3"))
+;; Package-Requires: ((emacs "28.1") (org "9.3") (transient "0.5.0"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -1423,6 +1423,18 @@ with a \\[universal-argument] prefix argument."
   (let ((x (plist-member plist property)))
     (if x (cadr x) default)))
 
+(defun notdeft-plist-get-some (plist &rest properties)
+  "From PLIST the first non-nil value of PROPERTIES.
+Return nil if there is no such value."
+  (cl-some (lambda (property)
+             (plist-get plist property))
+           properties))
+
+(defun notdeft-plist-put (plist property value)
+  "To PLIST put PROPERTY VALUE, with functional update.
+Do not remove any duplicates."
+  (cons property (cons value plist)))
+
 (defvar notdeft-notename-history nil
   "History of `notdeft-read-notename' notenames.
 These are without directory path or extension.")
@@ -1894,55 +1906,50 @@ If non-nil, use the specified PROMPT. Use
 path of the selected note file, if any, or nil otherwise."
   (funcall notdeft-compread-file-function files prompt))
 
-(defvar notdeft-initial-query nil
-  "A note file selection option.
-Some commands asking the user for a search query may check the
-value of this variable. If it is non-nil it should be a string to
-offer for editing as the search query.")
-
-(defun notdeft-xapian-compread-search (&optional query edit open)
+(defun notdeft-xapian-compread-search (&rest arguments)
   "Search for a file matching a Xapian query.
-If a QUERY is provided, then use it as is. Otherwise offer
-`notdeft-initial-query' for interactive editing, accounting for
+If a QUERY is provided in the keyword ARGUMENTS plist then use
+it, and otherwise ask the user for a query, accounting for
 `notdeft-xapian-query-history'. If EDIT is non-nil then offer
-interactive query editing in any case. If there are any matches
-in the query search results, present a choice list of files with
-`notdeft-compread-file'. Return the path of the chosen file, or
-nil if nothing was found. Optionally OPEN any selected file with
-`notdeft-find-file'."
+QUERY for interactive editing in any case. If there are any
+matches in the query search results, present a choice list of
+files with `notdeft-compread-file'. Return the path of the chosen
+file, or nil if nothing was found. Optionally OPEN any selected
+file with `notdeft-find-file'."
   (notdeft-with-xapian
-    (let ((query
-           (if (and query (not edit))
-               query
-	     (notdeft-xapian-read-query
-              (or query notdeft-initial-query)))))
+    (let ((query (let ((query (plist-get arguments :query)))
+                   (if (and query (not (notdeft-plist-get-some arguments :edit :rich)))
+                       query
+	             (notdeft-xapian-read-query (or query (plist-get arguments :initial-query)))))))
       (when query
-	(let* ((notdeft-xapian-max-results
+	(let* ((notdeft-xapian-order-by (plist-get arguments :order-by))
+               (notdeft-xapian-max-results
                 (or notdeft-select-note-file-max-choices notdeft-xapian-max-results))
                (files (notdeft-xapian-search-all-dirs query)))
 	  (when files
             (let ((file (notdeft-compread-file files)))
               (prog1
                   file
-                (when (and file open)
+                (when (and file (plist-get arguments :open))
                   (notdeft-find-file file))))))))))
 
-(defun notdeft-xapian-compread-search-find-file (&optional query edit)
+(defun notdeft-xapian-compread-search-find-file (&rest arguments)
   "Perform a Xapian search to find and open a file.
-The arguments QUERY and EDIT are as for
-`notdeft-xapian-compread-search'."
-  (notdeft-xapian-compread-search query edit t))
+The ARGUMENTS are as for `notdeft-xapian-compread-search'."
+  (apply #'notdeft-xapian-compread-search
+         (notdeft-plist-put arguments :open t)))
 
 (defvar notdeft-open-search-function #'notdeft-xapian-compread-search-find-file
   "Default function to use for searching and presenting results.
-The function must accept at least the positional
-arguments (QUERY:string-or-null-p RICH:booleanp), where QUERY is
-an optional search string. The return value is undefined. If a
-QUERY is not provided, then the function must ask for what to
-search. RICH is a boolean flag that is a hint about whether the
-function may interactively offer non-default query or result
-presentation options. This function only defines the default way
-of querying for and presenting results, and some commands (e.g.,
+The function must accept any number of keyword arguments, one of
+which may be a QUERY search string. The return value is
+undefined. If a QUERY is not provided, then the function must ask
+for what to search. Other arguments may be provided, and
+implementations shall choose which of them to honor. Notably,
+RICH is a boolean flag that is a hint about whether the function
+may interactively offer non-default query or result presentation
+options. This function only defines the default way of querying
+for and presenting results, and some commands (e.g.,
 `notdeft-open-query' and `notdeft-search-find-file') always
 present their results in a specific way without consulting this
 setting.")
@@ -1950,41 +1957,42 @@ setting.")
 (defvar notdeft-search-find-file-function #'notdeft-xapian-compread-search-find-file
   "Function to use by default for search and `find-file'.
 The function is required to call `notdeft-find-file' for any
-selected file. Its signature must be as for
-`notdeft-open-search-function', namely (QUERY:string-or-null-p
-RICH:booleanp) -> anything.")
+selected file. Its arguments and return value are the same as
+described for `notdeft-open-search-function'.")
 
 (defvar notdeft-select-note-file-function #'notdeft-xapian-compread-search
   "Function for selecting a note file.
 This variable defines the behavior of `notdeft-select-note-file',
 which is used generally when another operation needs a note file
 to be selected, probably interactively. The function must accept
-at least the positional arguments (QUERY:string-or-null-p
-RICH:booleanp), where QUERY is an optional and possibly
-applicable search string, and RICH consents to offers of
-non-default behavior. The function must return the full pathname
-of the selected file, or nil if none. For example
-implementations, see `notdeft-compread-select-note-file' and
+at least the keyword arguments QUERY:string-or-null-p and
+RICH:booleanp, where QUERY is an optional and possibly applicable
+search string, and RICH consents to offers of non-default
+behavior. The function must return the full pathname of the
+selected file, or nil if none. For example implementations, see
+`notdeft-compread-select-note-file' and
 `notdeft-xapian-compread-search'.")
 
-(defun notdeft-compread-select-note-file (&rest _arguments)
+(defun notdeft-compread-select-note-file (&rest arguments)
   "Offer a choice list of all notes.
 Return a file name for the selected note. Return nil if there are
-no notes from which to select. Any _ARGUMENTS are ignored."
+no notes from which to select. Any ARGUMENTS are ignored."
+  (ignore arguments)
   (let ((files (notdeft-make-note-file-list))
         (prompt "NotDeft note: "))
     (notdeft-compread-file files prompt)))
 
-(defun notdeft-select-note-file (&optional rich)
+(defun notdeft-select-note-file (&rest arguments)
   "Let the user choose a note file.
 Allow choosing from all notes in the collection. Return the file
 name of the chosen note, or nil for none. Optionally offer a more
-RICH mode of selection. Optionally honor related configuration
-options such as `notdeft-initial-query'."
-  (if (and notdeft-select-note-file-function
-	   (or rich notdeft-select-note-file-by-search))
-      (funcall notdeft-select-note-file-function nil rich)
-    (notdeft-compread-select-note-file)))
+RICH mode of selection, if the keyword ARGUMENTS include that
+option. Optionally honor related options such as INITIAL-QUERY."
+  (let ((rich (plist-get arguments :rich)))
+    (if (and notdeft-select-note-file-function
+	     (or rich notdeft-select-note-file-by-search))
+        (apply notdeft-select-note-file-function arguments)
+      (notdeft-compread-select-note-file))))
 
 (defun notdeft-string-from-region (&optional no-region)
   "Get a string from any active region.
@@ -1995,64 +2003,67 @@ there is a region."
      (region-beginning) (region-end))))
 
 ;;;###autoload
-(defun notdeft-open-search (&optional query rich initial)
+(defun notdeft-open-search (&rest arguments)
   "Execute a search and present results in the default way.
 The default way is defined by `notdeft-open-search-function'.
-Pass QUERY and RICH to that function and return whatever it
-returns. When called interactively have a \\[universal-argument]
+Pass keyword ARGUMENTS to that function and return whatever it
+returns. When called interactively have \\[universal-argument]
 prefix argument enable the RICH option, and possibly use any
-active region as INITIAL input if prompting for a search query."
+active region as INITIAL-QUERY input if prompting for a search
+query."
   (interactive
-   (list nil current-prefix-arg (notdeft-string-from-region)))
-  (let ((notdeft-initial-query initial))
-    (funcall notdeft-open-search-function query rich)))
+   (list :rich current-prefix-arg :initial-query (notdeft-string-from-region)))
+  (apply notdeft-open-search-function arguments))
 
 ;;;###autoload
-(defun notdeft-search-find-file (&optional query rich initial)
+(defun notdeft-search-find-file (&rest arguments)
   "Execute a search in order to `find-file' to open.
 The default way is defined by
-`notdeft-search-find-file-function'. Pass QUERY and RICH to that
+`notdeft-search-find-file-function'. Pass ARGUMENTS to that
 function and return whatever it returns. If called interactively
-with a \\[universal-argument] prefix use a non-nil RICH value,
-and possibly use any active region as INITIAL input if prompting
-for a search query."
+with a \\[universal-argument] prefix include a non-nil RICH value
+among the ARGUMENTS, and possibly use any active region as
+INITIAL-QUERY input if prompting for a search query."
   (interactive
-   (list nil current-prefix-arg (notdeft-string-from-region)))
-  (let ((notdeft-initial-query initial))
-    (funcall notdeft-search-find-file-function query rich)))
+   (list :rich current-prefix-arg :initial-query (notdeft-string-from-region)))
+  (apply notdeft-search-find-file-function arguments))
 
 (defalias 'notdeft-query-select-find-file
   #'notdeft-search-find-file
   "Deprecated. Use `notdeft-search-find-file'.")
 
 ;;;###autoload
-(defun notdeft-xapian-ido-search-find-file (&optional query rich initial)
+(defun notdeft-xapian-ido-search-find-file (&rest arguments)
   "Search and interactively select and open file.
 Implement `notdeft-search-find-file-function' in terms of Xapian
-and Ido, accepting arguments QUERY and RICH as documented. When
-called interactively, possibly use any active region as INITIAL
-input if prompting for a search query."
+and Ido, accepting ARGUMENTS as documented. When called
+interactively have \\[universal-argument] imply RICH mode, and
+possibly use any active region as INITIAL-QUERY if prompting for
+a search query."
   (interactive
-   (list nil current-prefix-arg (notdeft-string-from-region)))
-  (let ((notdeft-compread-file-function #'notdeft-ido-compread-file)
-        (notdeft-initial-query initial))
-    (notdeft-xapian-compread-search-find-file query rich)))
+   (list :rich current-prefix-arg :initial-query (notdeft-string-from-region)))
+  (let ((notdeft-compread-file-function #'notdeft-ido-compread-file))
+    (apply #'notdeft-xapian-compread-search-find-file arguments)))
 
 ;;;###autoload
-(defun notdeft-lucky-find-file (&optional query by-time)
-  "Open the highest-ranked note matching a search QUERY.
-If BY-TIME is non-nil, then choose the most recent matching note
-instead of the highest-ranked one. If called interactively, read
-a search query interactively, accounting for
-`notdeft-xapian-query-history' and any selected region. Open the
-file directly, without switching to any `notdeft-buffer'."
+(defun notdeft-lucky-find-file (&rest arguments)
+  "Open the highest-ranked note matching a search query.
+Accept ARGUMENTS as documented for
+`notdeft-search-find-file-function', but only consider QUERY and
+ORDER-BY parameters. If called interactively, read a search query
+interactively, accounting for `notdeft-xapian-query-history' and
+any selected region. With a \\[universal-argument] prefix
+argument choose the most recent matching note instead of the
+highest-ranked one. Open the file directly, without switching to
+any `notdeft-buffer'."
   (interactive
    (let ((by-time (equal current-prefix-arg '(4)))
 	 (no-region (equal current-prefix-arg '(16))))
-     (list
-      (notdeft-xapian-read-query (notdeft-string-from-region no-region))
-      by-time)))
-  (let* ((notdeft-xapian-order-by-time by-time)
+     (list :query (notdeft-xapian-read-query
+                   (notdeft-string-from-region no-region))
+           :order-by (and by-time 'time))))
+  (let* ((query (plist-get arguments :query))
+         (notdeft-xapian-order-by (plist-get arguments :order-by))
 	 (notdeft-xapian-max-results 1)
 	 (files (notdeft-xapian-search-all-dirs query)))
     (if (not files)
@@ -2082,17 +2093,17 @@ non-nil."
     (let ((title (notdeft-chomp title)))
       (unless (string-equal title "")
         (notdeft-open-search
-         (if as-phrase
-             (notdeft-string-as-phrase-query title)
-           title))))))
+         :query (if as-phrase
+                    (notdeft-string-as-phrase-query title)
+                  title))))))
 
 ;;;###autoload
 (defun notdeft-search-for-note-title (buffer &optional as-phrase)
   "Query for the title of the note in BUFFER.
 Use the title of the `current-buffer' if called interactively. Do
-nothing if there is no (non-empty) title. Optionally execute the
-search as a phrase search if AS-PHRASE is non-nil or when called
-interactively with a \\[universal-argument] prefix argument."
+nothing if there is no (non-empty) title. Optionally execute
+AS-PHRASE search, also when called interactively with a
+\\[universal-argument] prefix argument."
   (interactive
    (list (current-buffer) current-prefix-arg))
   (let ((title (notdeft-buffer-title buffer nil t)))

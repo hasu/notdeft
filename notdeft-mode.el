@@ -807,25 +807,44 @@ interactively with a \\[universal-argument] prefix argument."
       (notdeft-find-file file t switch))))
 
 ;;;###autoload
-(defun notdeft-open-query (&optional query rank negate)
+(defun notdeft-mode-open-search (&rest arguments)
+  "Open search results in a NotDeft mode buffer.
+The ARGUMENTS are compatible with the
+`notdeft-open-search-function' signature, and may include QUERY,
+ORDER-BY, and NEW-BUFFER arguments, as documented for
+`notdeft-open-query'."
+  (when notdeft-xapian-program
+    (let* ((query (plist-get arguments :query))
+           (order-by (plist-get arguments :order-by))
+           (!order (pcase order-by
+                     ('time "!time ")
+                     ('name "!file ")
+                     ('relevance "!rank ")
+                     ;; By default we specify nothing so that the `notdeft-xapian' default applies.
+                     (_ "")))
+           (new-buffer (plist-get arguments :new-buffer))
+           (query (concat !order (or query ""))))
+      (notdeft nil new-buffer)
+      (notdeft-xapian-query-set query))))
+
+;;;###autoload
+(defun notdeft-open-query (&optional query by-time new-buffer)
   "Open NotDeft with an Xapian search QUERY.
-When called interactively, prompt the user for a QUERY. With
-non-nil RANK, have results ranked by relevance; when called
-interactively, the command prefix \\[universal-argument] 1 will
-set this option. Open the query in a new buffer as specified by
-the `notdeft-open-query-in-new-buffer' configuration option; a
-non-nil NEGATE argument reverses that setting, as does the prefix
-\\[universal-argument] when called interactively."
+Order the results either by relevance or BY-TIME. Optionally open
+the results in a NEW-BUFFER instead of replacing the query in an
+existing one. When called interactively, prompt the user for a
+QUERY, and have the results ordered by time, except when called
+with the \\[universal-argument] 1 prefix, in which case order by
+relevance. When called interactively open the query in a new
+buffer as specified by the `notdeft-open-query-in-new-buffer'
+configuration option, but have \\[universal-argument] negate that
+setting."
   (interactive (let ((prefix current-prefix-arg))
 		 (list (notdeft-xapian-read-query)
-		       (equal prefix 1)
-		       (equal prefix '(4)))))
-  (when notdeft-xapian-program
-    (let* ((query (if rank (concat "!rank " (or query "")) query))
-	   (new notdeft-open-query-in-new-buffer)
-	   (new (if negate (not new) new)))
-      (notdeft nil new)
-      (notdeft-xapian-query-set query))))
+		       (not (equal prefix 1))
+                       (funcall (if (equal prefix '(4)) #'not #'identity)
+                                notdeft-open-query-in-new-buffer))))
+  (notdeft-mode-open-search :query query :order-by (and by-time 'time) :new-buffer new-buffer))
 
 (defun notdeft-quit (&optional kill all)
   "Quit NotDeft mode.

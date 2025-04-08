@@ -54,12 +54,14 @@ ignored unless a recent enough version of Xapian is used."
   :safe #'stringp
   :group 'notdeft)
 
-(defcustom notdeft-xapian-order-by-time t
-  "Whether to order file list by decreasing modification time.
-Otherwise order by decreasing relevance, unless overridden by
-a query modifier."
-  :type 'boolean
-  :safe #'booleanp
+(defcustom notdeft-xapian-order-by 'time
+  "Search result ordering criterion.
+Whether to order file list by decreasing modification `time', by
+file `name', or by decreasing query `relevance' (for which nil
+may be used as a synonym). Any query modifier takes precedence
+over this setting."
+  :type '(choice (const time) (const name) (const relevance))
+  :safe #'symbolp
   :group 'notdeft)
 
 (defcustom notdeft-xapian-boolean-any-case t
@@ -139,30 +141,31 @@ RECREATE, truncate any existing index files."
 I.e., perform the query in terms of the Xapian indexes in the
 specified DIRS. Where a query is not specified, use a query that
 matches any file, and in that case consider
-`notdeft-xapian-order-by-time' to be true. Return at most
+`notdeft-xapian-order-by' to be `time'. Return at most
 `notdeft-xapian-max-results' results, as pathnames of the
 matching files. Sort by relevance, modification time, or
 non-directory filename, all descending, based on the
-`notdeft-xapian-order-by-time' setting and any query modifiers."
-  (let ((time-sort (if query notdeft-xapian-order-by-time t))
-	(max-results notdeft-xapian-max-results)
-	name-sort)
+`notdeft-xapian-order-by' setting and any query modifiers."
+  (let ((order-by (if query notdeft-xapian-order-by 'time))
+	(max-results notdeft-xapian-max-results))
     (when query
       (save-match-data
 	(while (string-match "^ *!\\([[:alpha:]]+\\)\\>" query)
 	  (let ((opt (match-string 1 query)))
 	    (setq query (substring query (match-end 0)))
 	    (pcase (downcase opt)
-	      ("time" (setq time-sort t))
-	      ("rank" (setq time-sort nil))
-	      ("all" (setq max-results 0))
-	      ("file" (setq name-sort t)))))))
+              ("time" (setq order-by 'time))
+              ("rank" (setq order-by 'relevance))
+              ("file" (setq order-by 'name))
+              ("all" (setq max-results 0)))))))
     (let* ((query (notdeft-chomp-nullify query))
 	   (s (shell-command-to-string
 	       (concat
 		(shell-quote-argument notdeft-xapian-program) " search"
-		(if name-sort " --name-sort" "")
-		(if time-sort " --time-sort" "")
+		(cond
+                 ((eq order-by 'time) " --time-sort")
+                 ((eq order-by 'name) " --name-sort")
+                 (t ""))
 		" --lang " (shell-quote-argument
 			    (or notdeft-xapian-language "none"))
 		(if notdeft-xapian-boolean-any-case
@@ -210,7 +213,7 @@ as word characters. The default is `keywords'."
 ;;; notdeft-xapian.el ends here
 
 ;; NotDeft, a note manager for Emacs
-;; Copyright (C) 2017-2022  Tero Hasu
+;; Copyright (C) 2017-2025  Tero Hasu
 ;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

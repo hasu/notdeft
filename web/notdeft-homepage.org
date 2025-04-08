@@ -254,7 +254,7 @@ Such code must appear after
    
 See the other =notdeft-xapian-*= customization variables for configuring the Xapian indexing and searching behavior. Most notably:
 - The configuration variable =notdeft-xapian-max-results= controls the maximum number of files to list in a =notdeft-mode= buffer. You may set it to 0 to always have all results displayed.
-- The default is to order the results so that most recently edited files are listed first, but you may change this behavior by setting =notdeft-xapian-order-by-time= to =nil=, in which case Xapian's ranking mechanism is used instead.
+- The default is to order the results so that most recently edited files are listed first, but you may change this behavior by setting =notdeft-xapian-order-by= to =relevance=, in which case Xapian's ranking mechanism is used instead.
 
 * NotDeft Mode
 
@@ -539,9 +539,9 @@ The following prefixes are supported by NotDeft:
 ** Query Modifiers
 
    The following custom query syntax is supported:
-   - =!time= :: Prefix a query with =!time= to have the results sorted by decreasing file modification time, even if the =notdeft-xapian-order-by-time= configuration option is disabled.
-   - =!rank= :: Prefix a query with =!rank= to have the results sorted by decreasing relevance, regardless of the =notdeft-xapian-order-by-time= setting.
-   - =!file= :: Prefix a query with =!file= to have results sorted by (non-directory) file name, alphabetically, in decreasing order. Overrides all of the other sorting settings and modifiers.
+   - =!time= :: Prefix a query with =!time= to have the results sorted by decreasing file modification time, even if the =notdeft-xapian-order-by= configuration option is not set to =time=, which is the default setting.
+   - =!rank= :: Prefix a query with =!rank= to have the results sorted by decreasing relevance.
+   - =!file= :: Prefix a query with =!file= to have results sorted by (non-directory) file name, alphabetically, in decreasing order.
    - =!all= :: Prefix a query with =!all= to show /all/ matching results. Note that unless you specify this modifier, the contents of a query result list may differ depending on how the results are sorted, since less highly ranked notes may get excluded.
 
    A space character must be used to separate the above keywords from the rest of the query string.

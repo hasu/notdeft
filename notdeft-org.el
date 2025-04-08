@@ -34,11 +34,11 @@ function defines the opening of Org \"deft:\" links."
 	(org-open-file path t nil search)))))
 
 ;;;###autoload
-(defun notdeft-org-complete-deft-link (&optional prefix)
+(defun notdeft-org-complete-deft-link (&optional rich)
   "Define completion for Org \"deft:\" links.
-The optional PREFIX argument is ignored."
-  (ignore prefix)
-  (let* ((file (notdeft-select-note-file))
+Optionally request RICH behavior from
+`notdeft-select-note-file'."
+  (let* ((file (notdeft-select-note-file :rich rich :initial-query (notdeft-string-from-region)))
 	 (name (when file
 		 (file-name-nondirectory file))))
     (concat "deft:" (or name ""))))
@@ -103,9 +103,8 @@ NOTENAME, pick any one of them for deriving a description."
 	    (file
 	     ;; Select note before prompting for any description.
 	     ;; Provide any region text as a selection hint.
-	     (let ((notdeft-initial-query desc)
-                   (notdeft-xapian-order-by-time nil))
-	       (notdeft-select-note-file)))
+	     (let ((notdeft-xapian-order-by 'relevance))
+	       (notdeft-select-note-file :initial-query desc)))
 	    (desc
 	     (when (and file (/= pfx 4))
 	       (notdeft-org-read-link-description
@@ -181,7 +180,7 @@ the new note."
 Optionally and potentially (if supported) do the search and
 present results in a RICH manner. This defines the opening of Org
 \"notdeft:\" links."
-  (notdeft-open-search query rich))
+  (notdeft-open-search :query query :rich rich))
 
 ;;;###autoload
 (defun notdeft-org-store-notdeft-link ()
