@@ -28,16 +28,16 @@
 
 ;; Searching and Filtering
 
-;; NotDeft's primary operations are searching and filtering. The list
-;; of files matching a search query can be further narrowed down using
-;; a filter string, which will match both the title and the body text.
-;; To initiate a filter, simply start typing. Filtering happens on the
-;; fly. As you type, the file browser is updated to include only files
-;; that match the current string.
+;; The primary operations of `notdeft-mode' are searching and
+;; filtering. The list of files matching a search query can be further
+;; narrowed down using a filter string, which will match both the
+;; title and the body text. To initiate a filter, simply start typing.
+;; Filtering happens on the fly. As you type, the file browser is
+;; updated to include only files that match the current string.
 
 ;; To open the first matching file, simply press `RET`.  If no files
 ;; match your filter string, pressing `RET` will create a new file
-;; using the string as the title.  This is a very fast way to start
+;; using the string as the title.  This is a fast way to start
 ;; writing new notes.  The filename will be generated automatically.
 
 ;; To open files other than the first match, navigate up and down
@@ -552,13 +552,13 @@ current `notdeft-mode' buffer."
 
 (defun notdeft-query-edit ()
   "Enter a Xapian query string, and make it current."
-  (interactive)
+  (interactive nil notdeft-mode)
   (when notdeft-xapian-program
     (notdeft-xapian-query-set (notdeft-xapian-read-query))))
 
 (defun notdeft-query-clear ()
   "Clear current Xapian query string."
-  (interactive)
+  (interactive nil notdeft-mode)
   (when notdeft-xapian-program
     (notdeft-xapian-query-set nil)))
 
@@ -669,7 +669,7 @@ as they appear in `notdeft-current-files'. Where there is no
 filter string, use any `notdeft-xapian-query' instead, treating
 it as a plain string (without query operators). Use
 `grep-program' when set, and otherwise \"grep\"."
-  (interactive)
+  (interactive nil notdeft-mode)
   (let ((s (or notdeft-filter-string notdeft-xapian-query)))
     (when s
       (let ((grep-args
@@ -687,7 +687,7 @@ it as a plain string (without query operators). Use
 (defun notdeft-filter-clear (&optional pfx)
   "Clear the current filter string and refresh the file browser.
 With a prefix argument PFX, also clear any Xapian query."
-  (interactive "P")
+  (interactive "P" notdeft-mode)
   (if (and pfx notdeft-xapian-query)
       (progn
 	(setq notdeft-xapian-query nil)
@@ -710,7 +710,7 @@ In particular, update `notdeft-current-files'. Get the character
 from the variable `last-command-event', possibly as modified by
 `input-method-function', which could also produce multiple
 characters."
-  (interactive)
+  (interactive nil notdeft-mode)
   (let* ((events (if input-method-function
                      (let ((buffer-read-only nil))
                        (funcall input-method-function last-command-event))
@@ -730,7 +730,7 @@ characters."
 (defun notdeft-filter-decrement ()
   "Remove last character from the filter string and update state.
 In particular, update `notdeft-current-files'."
-  (interactive)
+  (interactive nil notdeft-mode)
   (notdeft-filter
    (and (> (length notdeft-filter-string) 1)
 	(substring notdeft-filter-string 0 -1))))
@@ -739,7 +739,7 @@ In particular, update `notdeft-current-files'."
   "Remove last word from the filter, if possible, and update.
 This is like `backward-kill-word' on the filter string, but the
 kill ring is not affected."
-  (interactive)
+  (interactive nil notdeft-mode)
   (when notdeft-filter-string
     (let* ((str notdeft-filter-string) ;; store buffer local value
 	   (new-filter
@@ -752,7 +752,7 @@ kill ring is not affected."
 
 (defun notdeft-filter-yank ()
   "Append the most recently killed or yanked text to the filter."
-  (interactive)
+  (interactive nil notdeft-mode)
   (let ((s (current-kill 0 t)))
     (notdeft-filter
      (if notdeft-filter-string
@@ -766,7 +766,7 @@ first listed file. If none are listed, but there is an active
 filter, quickly create a new file using the
 `notdeft-filter-string' as the title. Otherwise, quickly create a
 new file."
-  (interactive)
+  (interactive nil notdeft-mode)
   (cond
    ((widget-at)
     (widget-button-press (point)))
@@ -780,7 +780,8 @@ new file."
 Show filename, title, summary, etc. When called interactively
 show use the selected note FILE, if any."
   (interactive
-   (list (notdeft-filename-at-point t)))
+   (list (notdeft-filename-at-point t))
+   notdeft-mode)
   (when file
     (let* ((title (notdeft-file-title file))
 	   (summary (notdeft-file-summary file)))
@@ -792,7 +793,7 @@ show use the selected note FILE, if any."
 
 (defun notdeft-mode-open-file ()
   "Open the selected file, if any."
-  (interactive)
+  (interactive nil notdeft-mode)
   (let ((old-file (notdeft-filename-at-point t)))
     (when old-file
       (notdeft-find-file old-file))))
@@ -801,7 +802,7 @@ show use the selected note FILE, if any."
   "Open the selected file in another window.
 Optionally SWITCH to the other window, also if called
 interactively with a \\[universal-argument] prefix argument."
-  (interactive "P")
+  (interactive "P" notdeft-mode)
   (let ((file (notdeft-filename-at-point)))
     (when file
       (notdeft-find-file file t switch))))
@@ -848,14 +849,15 @@ setting."
 
 (defun notdeft-quit (&optional kill all)
   "Quit NotDeft mode.
-Optionally KILL the buffer instead of buying it. Optionally kill
+Optionally KILL the buffer instead of burying it. Optionally kill
 ALL NotDeft mode buffers. When called interactively, KILL if
 called with prefix argument(s), and kill ALL if called with two
 \\[universal-argument] prefixes."
   (interactive
    (list current-prefix-arg
          (equal current-prefix-arg '(16))))
-  (quit-window kill)
+  (when (notdeft-buffer-p)
+    (quit-window kill))
   (when all
     (dolist (buf (notdeft-buffer-list))
       (kill-buffer buf))))
@@ -978,7 +980,7 @@ two prefix arguments means RESET."
   "Open the selected note's Deft directory in Deft.
 Do that only when the command `deft' is available. This
 implementation makes assumptions about Deft."
-  (interactive)
+  (interactive nil notdeft-mode)
   (when (fboundp 'deft)
     (let ((old-file (notdeft-filename-at-point t)))
       (when old-file
