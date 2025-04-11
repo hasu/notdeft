@@ -195,6 +195,16 @@ Do that by showing a `message'."
   (when query
     (notdeft-mode-open-search :query query :order-by order-by :new-buffer new-buffer)))
 
+(defun notdeft-search-initial-value ()
+  "Initialize transient from `notdeft-search-arguments'.
+Return the transient arguments value."
+  (append
+   (when (plist-get notdeft-search-arguments :new-buffer)
+     '("--new-buffer"))
+   (when-let ((order-by (plist-get notdeft-search-arguments :order-by)))
+     (when (memq order-by '(relevance time name))
+       (list (format "--order-by=%s" order-by))))))
+
 ;;;###autoload (autoload 'notdeft-search "notdeft-command" nil t)
 (transient-define-prefix notdeft-search (&rest arguments)
   "Search for files matching a query.
@@ -202,6 +212,10 @@ Accept ARGUMENTS as for `notdeft-open-search', but mostly ignore
 them, instead letting the user choose interactively from a
 variety of search and result presentation options and actions."
   :refresh-suffixes t
+  ;; Not sure if it is documented that we can use a function to delay
+  ;; transient initialization until `notdeft-search-arguments' is
+  ;; already initialized. (ARGUMENTS is not in scope here.)
+  :value #'notdeft-search-initial-value
   ["Options"
    ("-b" "Order results by" "--order-by=" :choices (relevance time name))
    ("-n" "Create new NotDeft buffer" "--new-buffer")]
@@ -221,12 +235,14 @@ variety of search and result presentation options and actions."
    ("p" "Show current parameters" notdeft-show-search-arguments)
    ("v" "Open query" notdeft-search-open-query)]
   (interactive)
-  ;; We could also try falling back to `notdeft-string-from-region'
-  ;; here, but it's also quick to press "r" to fill it in.
   (setq notdeft-search-arguments
-        (plist-put arguments :query
-                   (or (plist-get arguments :query)
-                       (plist-get arguments :initial-query))))
+        (let ((query
+               ;; We could also try falling back to
+               ;; `notdeft-string-from-region' here, but it's also
+               ;; quick to press "r" to fill it in.
+               (or (plist-get arguments :query)
+                   (plist-get arguments :initial-query))))
+          (notdeft-plist-put arguments :query query)))
   (transient-setup 'notdeft-search))
 
 (provide 'notdeft-command)
