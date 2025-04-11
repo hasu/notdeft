@@ -220,12 +220,33 @@ use the latest history entry, without asking for a description."
 Optionally execute the search as a phrase search if AS-PHRASE is
 non-nil or when called interactively with a
 \\[universal-argument] prefix argument."
-  (interactive "P")
+  (interactive "P" org-mode)
   (let ((title
 	 (save-excursion
 	   (org-back-to-heading t)
 	   (nth 4 (org-heading-components)))))
     (notdeft-search-for-title title as-phrase)))
+
+;;;###autoload
+(defun notdeft-org-move-subtree-into-file (&optional pfx)
+  "Move the current Org subtree into a separate NotDeft note file.
+Use the heading as the \"#+TITLE\", and derive a default filename
+based on it. Save the note file into a NotDeft directory relative
+to the edited file, as applicable, falling back to the current
+`notdeft-directory' or interactive querying. The prefix argument
+PFX is as for `notdeft-new-file'."
+  (interactive "*P" org-mode)
+  (if (not (org-at-heading-p))
+      (message "Not at a heading")
+    (save-excursion
+      (let ((title (nth 4 (org-heading-components))))
+	(org-cut-subtree)
+	(let* ((file (notdeft-sub--new-file nil nil title pfx))
+	       (buf (get-file-buffer file)))
+	  (with-current-buffer buf
+	    (goto-char (point-min))
+	    (insert "#+TITLE: " title "\n\n")
+	    (org-paste-subtree 1)))))))
 
 (provide 'notdeft-org)
 
