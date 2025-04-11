@@ -1,13 +1,15 @@
-;;; notdeft-transcient.el --- Notdeft transcient menu -*- lexical-binding: t; -*-
+;;; notdeft-transient.el --- NotDeft transient menu -*- lexical-binding: t; -*-
 
-;; Require-package: ((transient))
-;; Copyright (C) 2025 by the author.
+;; Copyright (C) 2025 by the authors.
 ;; All rights reserved.
 ;; Author: DarkBuffalo <db@gnu.re>
+;; Package-Requires: (notdeft transient)
 ;; See end of file for licensing information.
 
 ;;; Commentary:
-;; Menu with transcient
+;; An example NotDeft global command menu with transient.
+;;
+;; For a different example of a NotDeft transient see also the `notdeft-searcḧ́' command.
 
 ;;; Code:
 
@@ -38,8 +40,8 @@
     ("x r" "reindex" notdeft-reindex)]
 
    ["Search"
-    ("o" "Search" notdeft-open-query)
-    ("f" "search/open" notdeft-search-find-file)
+    ("o" "Search" notdeft-mode-open-query)
+    ("f" "Select and open" notdeft-select-find-file)
     ("x o" "Lucky search" notdeft-lucky-find-file)]
 
    ["Movement"
@@ -51,6 +53,7 @@
     ("q" "Quit" transient-quit-one)]])
 
 (provide 'notdeft-transient)
+
 ;;; notdeft-transient.el ends here
 
 ;; Redistribution and use in source and binary forms, with or without

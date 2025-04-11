@@ -8,9 +8,10 @@
 ;; uses a Transient menu of options and actions to execute, so that it
 ;; is not necessary to remember all the available options and actions.
 ;;
-;; The command can also be used as a `notdeft-open-search-function',
-;; although due to its interactive and heavy duty nature it may not be
-;; particularly fit for the purpose.
+;; The command can also be used as a `notdeft-open-query-function',
+;; although due to its interactive nature it may not be particularly
+;; fit for the purpose, as in the common case one likely wants to see
+;; search results quicker and more directly.
 ;;
 ;; This feature requires Transient 0.5.0 or later, for the
 ;; refresh-suffixes support.
@@ -136,7 +137,7 @@ The value of `notdeft-search-query' is not included."
   (when-let ((val (transient-arg-value "--order-by=" (notdeft-search-transient-args))))
     (intern val)))
 
-(transient-define-suffix notdeft-show-search-arguments ()
+(transient-define-suffix notdeft-search-show-arguments ()
   "Show `notdeft-search' arguments in CLI style.
 Do that by showing a `message'."
   :transient t
@@ -153,13 +154,13 @@ Do that by showing a `message'."
   (notdeft-refresh)
   (message "Search index refreshed"))
 
-(transient-define-suffix notdeft-search-default-find-file (query order-by)
-  "Transient adapter for `notdeft-search-find-file'."
+(transient-define-suffix notdeft-search-select-find-file (query order-by)
+  "Transient adapter for `notdeft-select-find-file'."
   (interactive
    (list (notdeft-search-query)
          (notdeft-search-order-by)))
   (when query
-    (notdeft-search-find-file :query query :order-by order-by)))
+    (notdeft-select-find-file :query query :order-by order-by)))
 
 (transient-define-suffix notdeft-search-ido-find-file (query order-by)
   "Transient adapter for `notdeft-xapian-ido-search-find-file'."
@@ -178,22 +179,22 @@ Do that by showing a `message'."
     (notdeft-lucky-find-file :query query :order-by order-by)))
 
 (transient-define-suffix notdeft-search-open-query (query order-by new-buffer)
-  "Transient adapter for `notdeft-open-search'."
+  "Transient adapter for `notdeft-open-query'."
   (interactive
    (list (notdeft-search-query)
          (notdeft-search-order-by)
          (notdeft-search-option-enabled-p "--new-buffer")))
   (when query
-    (notdeft-open-search :query query :order-by order-by :new-buffer new-buffer)))
+    (notdeft-open-query :query query :order-by order-by :new-buffer new-buffer)))
 
 (transient-define-suffix notdeft-search-notdeft-mode-open-query (query order-by new-buffer)
-  "Transient adapter for `notdeft-mode-open-search'."
+  "Transient adapter for `notdeft-mode-open-query'."
   (interactive
    (list (notdeft-search-query)
          (notdeft-search-order-by)
          (notdeft-search-option-enabled-p "--new-buffer")))
   (when query
-    (notdeft-mode-open-search :query query :order-by order-by :new-buffer new-buffer)))
+    (notdeft-mode-open-query :query query :order-by order-by :new-buffer new-buffer)))
 
 (defun notdeft-search-initial-value ()
   "Initialize transient from `notdeft-search-arguments'.
@@ -208,7 +209,7 @@ Return the transient arguments value."
 ;;;###autoload (autoload 'notdeft-search "notdeft-command" nil t)
 (transient-define-prefix notdeft-search (&rest arguments)
   "Search for files matching a query.
-Accept ARGUMENTS as for `notdeft-open-search', but mostly ignore
+Accept ARGUMENTS as for `notdeft-open-query', but mostly ignore
 them, instead letting the user choose interactively from a
 variety of search and result presentation options and actions."
   :refresh-suffixes t
@@ -227,12 +228,12 @@ variety of search and result presentation options and actions."
    ("r" notdeft-search-use-region)
    ("t" notdeft-search-use-title)]
   ["Action"
-   ("f" "Select file" notdeft-search-default-find-file)
+   ("f" "Select file" notdeft-search-select-find-file)
    ("g" "Refresh first" notdeft-search-refresh)
    ("i" "Select file with Ido" notdeft-search-ido-find-file)
    ("l" "Lucky search" notdeft-search-lucky-find-file)
    ("o" "Open query in NotDeft buffer" notdeft-search-notdeft-mode-open-query)
-   ("p" "Show current parameters" notdeft-show-search-arguments)
+   ("p" "Show current parameters" notdeft-search-show-arguments)
    ("v" "Open query" notdeft-search-open-query)]
   (interactive)
   (setq notdeft-search-arguments

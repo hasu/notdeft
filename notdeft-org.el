@@ -1,11 +1,10 @@
-;;; notdeft-org.el --- some support for Org format NotDeft notes  -*- lexical-binding: t; -*-
+;;; notdeft-org.el --- Org format NotDeft note support  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
 ;; See end of file for licensing information.
 
 ;;; Commentary:
-;; Some NotDeft-specific support for `org-mode'. For Org mode version
-;; 9 and higher.
+;; Some support for `org-mode' used together with NotDeft.
 ;;
 ;; This feature requires no specific setup, as the public commands and
 ;; functions of this feature are autoloadable. However, see also
@@ -37,8 +36,8 @@ function defines the opening of Org \"deft:\" links."
 (defun notdeft-org-complete-deft-link (&optional rich)
   "Define completion for Org \"deft:\" links.
 Optionally request RICH behavior from
-`notdeft-select-note-file'."
-  (let* ((file (notdeft-select-note-file :rich rich :initial-query (notdeft-string-from-region)))
+`notdeft-select-file'."
+  (let* ((file (notdeft-select-file :rich rich :initial-query (notdeft-string-from-region)))
 	 (name (when file
 		 (file-name-nondirectory file))))
     (concat "deft:" (or name ""))))
@@ -104,7 +103,7 @@ NOTENAME, pick any one of them for deriving a description."
 	     ;; Select note before prompting for any description.
 	     ;; Provide any region text as a selection hint.
 	     (let ((notdeft-xapian-order-by 'relevance))
-	       (notdeft-select-note-file :initial-query desc)))
+	       (notdeft-select-file :initial-query desc)))
 	    (desc
 	     (when (and file (/= pfx 4))
 	       (notdeft-org-read-link-description
@@ -180,7 +179,7 @@ the new note."
 Optionally and potentially (if supported) do the search and
 present results in a RICH manner. This defines the opening of Org
 \"notdeft:\" links."
-  (notdeft-open-search :query query :rich rich))
+  (notdeft-open-query :query query :rich rich))
 
 ;;;###autoload
 (defun notdeft-org-store-notdeft-link ()

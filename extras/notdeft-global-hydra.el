@@ -45,8 +45,8 @@
   ("x c" notdeft-gc "GC" :exit nil)
   ("x r" notdeft-reindex "reindex" :exit nil)
   ;; search
-  ("o" notdeft-open-query "search")
-  ("f" notdeft-search-find-file "search/open")
+  ("o" notdeft-mode-open-query "search")
+  ("f" notdeft-select-find-file "select and open")
   ("x o" notdeft-lucky-find-file "lucky search")
   ;; movement
   ("b" notdeft-switch-to-note-buffer "switch to note")

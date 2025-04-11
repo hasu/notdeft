@@ -15,7 +15,7 @@
 ;; commands that should be directly accessible due to their nature
 ;; (like `notdeft-lucky-find-file' and `notdeft-new-file'), and
 ;; commands that are likely to be used often (like
-;; `notdeft-search-find-file' and `notdeft-rename-file'). It is
+;; `notdeft-select-find-file' and `notdeft-rename-file'). It is
 ;; left to users to bind additional commands according to personal
 ;; tastes and requirements.
 ;;
@@ -26,7 +26,7 @@
 ;;
 ;; The feature is also designed to be loadable before `notdeft'
 ;; itself, and indeed some of the commands in the keymap (e.g.,
-;; `notdeft' and `notdeft-search-find-file') are suitable for
+;; `notdeft' and `notdeft-select-find-file') are suitable for
 ;; launching NotDeft, and therefore causing the `notdeft' feature to
 ;; get loaded. In order to support this all the commands bound in the
 ;; keymap are autoloadable.
@@ -42,9 +42,9 @@
 (declare-function notdeft-archive-file "notdeft")
 (declare-function notdeft-show-file-directory "notdeft")
 (declare-function notdeft-refresh "notdeft")
-(declare-function notdeft-search-find-file "notdeft")
+(declare-function notdeft-select-find-file "notdeft")
 (declare-function notdeft-lucky-find-file "notdeft")
-(declare-function notdeft-open-query "notdeft-mode")
+(declare-function notdeft-mode-open-query "notdeft-mode")
 (declare-function notdeft-switch-to-note-buffer "notdeft")
 (declare-function notdeft-switch-to-buffer "notdeft-mode")
 
@@ -71,9 +71,9 @@
 (define-key notdeft-global-map (kbd "g") #'notdeft-refresh)
 
 ;; search
-(define-key notdeft-global-map (kbd "C-f") #'notdeft-search-find-file)
+(define-key notdeft-global-map (kbd "C-f") #'notdeft-select-find-file)
 (define-key notdeft-global-map (kbd "j") #'notdeft-lucky-find-file)
-(define-key notdeft-global-map (kbd "o") #'notdeft-open-query)
+(define-key notdeft-global-map (kbd "o") #'notdeft-mode-open-query)
 
 ;; movement
 (define-key notdeft-global-map (kbd "b") #'notdeft-switch-to-note-buffer)

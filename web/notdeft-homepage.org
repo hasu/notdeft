@@ -281,7 +281,7 @@ To clear a query, you can
 
 To manage the notes that are listed in the NotDeft Mode buffer, you can use mode-specific command, which are bound to the mode's =C-c= keymap. There are commands for renaming, deleting, and moving notes, for example. Press =C-c f1= to see a full list of the commands bound to =C-c=.
 
-To open a =*NotDeft*= buffer directly with a particular search query, use the command =notdeft-open-query= from any buffer.
+To open a =*NotDeft*= buffer directly with a particular search query, use the command =notdeft-mode-open-query= from any buffer.
 
 ** Displaying Individual Filter String Matches
 
@@ -293,9 +293,9 @@ NotDeft allows multiple =notdeft-mode= buffers to exist at once, which may be us
 
 Normally, executing the =notdeft= command only creates a new =*NotDeft*= buffer if one does not already exist---otherwise the command merely switches to an existing =*NotDeft*= buffer. It is possible to have the command always create a new =notdeft-mode= buffer by invoking it with a prefix argument, i.e., =C-u M-x notdeft=.
 
-The =notdeft-open-query= command also accepts a prefix argument, to arrange for the search results to be listed in a new buffer. This behavior can also be made the default for that command by setting the configuration parameter =notdeft-open-query-in-new-buffer= to =t=. With that parameter set, the prefix argument's meaning is inverted, so that =C-u M-x notdeft-open-query= does /not/ create an additional buffer.
+The =notdeft-mode-open-query= command also accepts a prefix argument, to arrange for the search results to be listed in a new buffer. This behavior can also be made the default for that command by setting the configuration parameter =notdeft-open-query-in-new-buffer= to =t=. With that parameter set, the prefix argument's meaning is inverted, so that =C-u M-x notdeft-mode-open-query= does /not/ create an additional buffer.
 
-The question of whether to create a new buffer does not apply to other search commands. Within a NotDeft buffer, the commands =notdeft-query-edit= and =notdeft-query-clear= merely replace the buffer's search result set, whereas the commands =notdeft-lucky-find-file= and =notdeft-search-find-file= do not use a NotDeft buffer for displaying their results.
+The question of whether to create a new buffer does not apply to other search commands. Within a NotDeft buffer, the commands =notdeft-query-edit= and =notdeft-query-clear= merely replace the buffer's search result set, whereas the commands =notdeft-lucky-find-file= and =notdeft-select-find-file= do not use a NotDeft buffer for displaying their results.
 
 For dealing with existing =notdeft-mode= buffers, there is a =notdeft-switch-to-buffer= command for interactively selecting a buffer and switching to it. It presents a choice list of buffer names in the minibuffer, and shows any query and filter strings associated with those buffers for better informed selection.
 
@@ -414,10 +414,10 @@ The above solution gives us a “proper” way to enable the NotDeft note minor 
 :END:
 
 Several of NotDeft's commands are autoloadable, and may be invoked from outside a =*NotDeft*= buffer. For example, to quickly find relevant notes when in another buffer, you might use
-: M-x notdeft-open-query
+: M-x notdeft-mode-open-query
 which then interactively asks for a search query for opening up in a NotDeft buffer. That command can of course be bound to a key.
 
-A command similar to =notdeft-open-query= is
+A similar command is
 : M-x notdeft-lucky-find-file
 which also asks for a search query, but then proceeds to open up the most highly ranked result file directly, without going via a =*NotDeft*= buffer. This command is similar to =find-file= in Emacs, but avoids having to specify the path of the file you're interested in; instead, this approach to “file finding” relies on sufficiently unique titling or tagging of the notes involved.
 
@@ -426,7 +426,7 @@ NotDeft commands that are usable from outside =notdeft-mode= might be bound to k
 (require 'notdeft-global)
 (global-set-key [f6] 'notdeft-global-map)
 #+END_SRC
-after which the command =[f6] o= should invoke the =notdeft-open-query= command in any mode that does not override the binding for F6 with something else.
+after which the command =[f6] o= should invoke the =notdeft-mode-open-query= command in any mode that does not override the binding for F6 with something else.
 
 ** Access from NotDeft Note Buffers
 
@@ -440,7 +440,7 @@ You might also implement additional commands in terms of the globally accessible
 #+BEGIN_SRC emacs-lisp
   (defun my-open-todo-notes ()
     (interactive)
-    (notdeft-open-query "tag:todo"))
+    (notdeft-open-query :query "tag:todo"))
 #+END_SRC
 
 An intended use case for NotDeft is to support other applications that wish to locate files in terms of search queries instead of path names. For example, suppose we are using an =org-contacts= command to look for contacts by =name=, and that command expects the =org-contacts-files= list to be set. In that scenario we might set that variable for it based on a suitable NotDeft search query:

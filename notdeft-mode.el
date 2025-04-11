@@ -11,8 +11,8 @@
 ;;
 ;; This feature is optional, and need not be loaded in order to use
 ;; core NotDeft functionality. Some commands defined here (like
-;; `notdeft' and `notdeft-open-query') are autoloadable in order to
-;; allow a NotDeft buffer to be opened before the feature has been
+;; `notdeft' and `notdeft-mode-open-query') are autoloadable in order
+;; to allow a NotDeft buffer to be opened before the feature has been
 ;; loaded.
 
 ;; File Browser
@@ -68,9 +68,9 @@
 
 ;; Once you have NotDeft installed (with the necessary autoloads) you
 ;; can then run `M-x notdeft` to create a `notdeft-mode' buffer.
-;; Alternatively, you may find it convenient to execute `M-x
-;; notdeft-open-query` to enter a search query from anywhere, which
-;; then also opens a `notdeft-mode' buffer for displaying the results.
+;; Alternatively, you may find it convenient to
+;; `notdeft-mode-open-query' from anywhere, which then also opens a
+;; `notdeft-mode' buffer for displaying the results.
 
 ;;; Code:
 
@@ -102,7 +102,7 @@ have no file information displayed."
 (defcustom notdeft-open-query-in-new-buffer nil
   "Whether to open query results in a new buffer.
 More specifically, when this variable is non-nil, the
-`notdeft-open-query' command shows its matches in a freshly
+`notdeft-mode-open-query' command shows its matches in a freshly
 created NotDeft buffer."
   :type 'boolean
   :safe #'booleanp
@@ -808,12 +808,25 @@ interactively with a \\[universal-argument] prefix argument."
       (notdeft-find-file file t switch))))
 
 ;;;###autoload
-(defun notdeft-mode-open-search (&rest arguments)
-  "Open search results in a NotDeft mode buffer.
-The ARGUMENTS are compatible with the
-`notdeft-open-search-function' signature, and may include QUERY,
-ORDER-BY, and NEW-BUFFER arguments, as documented for
-`notdeft-open-query'."
+(defun notdeft-mode-open-query (&rest arguments)
+  "Open NotDeft with a Xapian search query.
+Accept `notdeft-open-query-function' compatible keyword
+ARGUMENTS, including any QUERY. Order search results as specified
+by any ORDER-BY argument. Optionally open the results in a
+NEW-BUFFER instead of replacing the query in an existing
+`notdeft-mode' one. When called interactively, prompt the user
+for a QUERY, and have the results ordered by time, except when
+called with the \\[universal-argument] 1 prefix, in which case
+order by relevance. When called interactively open the query in a
+new buffer as specified by the `notdeft-open-query-in-new-buffer'
+configuration option, but have \\[universal-argument] negate that
+setting."
+  (interactive
+   (let ((prefix current-prefix-arg))
+     (list :query (notdeft-xapian-read-query)
+	   :order-by (and (not (equal prefix 1)) 'time)
+           :new-buffer (funcall (if (equal prefix '(4)) #'not #'identity)
+                                notdeft-open-query-in-new-buffer))))
   (when notdeft-xapian-program
     (let* ((query (plist-get arguments :query))
            (order-by (plist-get arguments :order-by))
@@ -827,25 +840,6 @@ ORDER-BY, and NEW-BUFFER arguments, as documented for
            (query (concat !order (or query ""))))
       (notdeft nil new-buffer)
       (notdeft-xapian-query-set query))))
-
-;;;###autoload
-(defun notdeft-open-query (&optional query by-time new-buffer)
-  "Open NotDeft with an Xapian search QUERY.
-Order the results either by relevance or BY-TIME. Optionally open
-the results in a NEW-BUFFER instead of replacing the query in an
-existing one. When called interactively, prompt the user for a
-QUERY, and have the results ordered by time, except when called
-with the \\[universal-argument] 1 prefix, in which case order by
-relevance. When called interactively open the query in a new
-buffer as specified by the `notdeft-open-query-in-new-buffer'
-configuration option, but have \\[universal-argument] negate that
-setting."
-  (interactive (let ((prefix current-prefix-arg))
-		 (list (notdeft-xapian-read-query)
-		       (not (equal prefix 1))
-                       (funcall (if (equal prefix '(4)) #'not #'identity)
-                                notdeft-open-query-in-new-buffer))))
-  (notdeft-mode-open-search :query query :order-by (and by-time 'time) :new-buffer new-buffer))
 
 (defun notdeft-quit (&optional kill all)
   "Quit NotDeft mode.
