@@ -22,10 +22,19 @@
 (require 'subr-x)
 (require 'transient)
 
-(defvar-local notdeft-search-query nil
-  "Current `notdeft-search' query, if any.
+(defvar-local notdeft-search-arguments nil
+  "Current `notdeft-search' arguments, as a plist.
 Used to track the search query through transient execution,
 locally for a buffer.")
+
+(defun notdeft-search-query ()
+  "Current `notdeft-search' query, if any."
+  (plist-get notdeft-search-arguments :query))
+
+(defun notdeft-search-set-query (query)
+  "Set QUERY to search arguments."
+  (setq notdeft-search-arguments
+        (plist-put notdeft-search-arguments :query query)))
 
 (defun notdeft-value-faced (str)
   "STR with `transient-value' face."
@@ -34,9 +43,10 @@ locally for a buffer.")
 
 (defun notdeft-search-query-description ()
   "Current `notdeft-search' query string description."
-  (if notdeft-search-query
-      (propertize notdeft-search-query 'face 'transient-value)
-    (propertize "<unset>" 'face 'transient-inactive-value)))
+  (let ((query (notdeft-search-query)))
+    (if query
+        (propertize query 'face 'transient-value)
+      (propertize "<unset>" 'face 'transient-inactive-value))))
 
 (transient-define-suffix notdeft-search-query-display ()
   "Show info field showing current search query."
@@ -50,14 +60,16 @@ locally for a buffer.")
   (interactive)
   ;; We rely on :refresh-suffixes t refreshing the transient.
   ;; Alternatively we could use the private `transient--redisplay' API.
-  (setq notdeft-search-query (notdeft-xapian-read-query notdeft-search-query)))
+  (let ((query (notdeft-search-query)))
+    (notdeft-search-set-query
+     (notdeft-xapian-read-query query))))
 
 (transient-define-suffix notdeft-search-query-clear ()
   "Clear `notdeft-search' query argument."
   :transient t
-  :if-non-nil 'notdeft-search-query
+  :if 'notdeft-search-query
   (interactive)
-  (setq notdeft-search-query nil))
+  (notdeft-search-set-query nil))
 
 (transient-define-suffix notdeft-search-query-add-tag ()
   "Add \"tag:\" for selected keyword."
@@ -66,9 +78,9 @@ locally for a buffer.")
   (when-let ((keywords (notdeft-xapian-list-all-keywords))
              (keyword (completing-read "Keyword: " keywords)))
     (let ((tag (concat "tag:" keyword))
-          (query notdeft-search-query))
-      (setq notdeft-search-query
-            (if query (concat tag " AND " query) tag)))))
+          (query (notdeft-search-query)))
+      (notdeft-search-set-query
+       (if query (concat tag " AND " query) tag)))))
 
 (defun notdeft-sample-string (str)
   "Return STR or a shorter sample of it."
@@ -86,7 +98,10 @@ locally for a buffer.")
   (let ((str (notdeft-string-from-region)))
     (concat "Use region string"
             (if str
-                (concat " \"" (notdeft-value-faced (notdeft-sample-string str)) "\"")
+                (concat " \""
+                        (notdeft-value-faced
+                         (notdeft-sample-string str))
+                        "\"")
               "")
             " as query")))
 
@@ -96,7 +111,8 @@ locally for a buffer.")
   :if-non-nil 'mark-active
   :description #'notdeft-search-use-region-description
   (interactive)
-  (setq notdeft-search-query (notdeft-chomp-nullify (notdeft-string-from-region))))
+  (notdeft-search-set-query
+   (notdeft-chomp-nullify (notdeft-string-from-region))))
 
 (transient-define-suffix notdeft-search-use-title ()
   "Use note title as `notdeft-search-query'."
@@ -104,20 +120,20 @@ locally for a buffer.")
   :if #'notdeft-note-buffer-p
   :description "Use note title as query"
   (interactive)
-  (setq notdeft-search-query (notdeft-buffer-title)))
+  (notdeft-search-set-query (notdeft-buffer-title)))
 
-(defun notdeft-search-arguments ()
-  "List `notdeft-search' arguments.
+(defun notdeft-search-transient-args ()
+  "List `notdeft-search' transient arguments.
 The value of `notdeft-search-query' is not included."
   (transient-args 'notdeft-search))
 
 (defun notdeft-search-option-enabled-p (option)
   "Whether a `notdeft-search' OPTION is enabled."
-  (member option (notdeft-search-arguments)))
+  (member option (notdeft-search-transient-args)))
 
 (defun notdeft-search-order-by ()
   "Return an --order-by value symbol."
-  (when-let ((val (transient-arg-value "--order-by=" (notdeft-search-arguments))))
+  (when-let ((val (transient-arg-value "--order-by=" (notdeft-search-transient-args))))
     (intern val)))
 
 (transient-define-suffix notdeft-show-search-arguments ()
@@ -126,8 +142,9 @@ Do that by showing a `message'."
   :transient t
   (interactive)
   (message "Search parameters: %S"
-           (append (transient-args 'notdeft-search)
-                   (if notdeft-search-query (list notdeft-search-query) nil))))
+           (append (notdeft-search-transient-args)
+                   (let ((query (notdeft-search-query)))
+                     (and query (list query))))))
 
 (transient-define-suffix notdeft-search-refresh ()
   "Refresh, with a completion message."
@@ -139,7 +156,7 @@ Do that by showing a `message'."
 (transient-define-suffix notdeft-search-default-find-file (query order-by)
   "Transient adapter for `notdeft-search-find-file'."
   (interactive
-   (list notdeft-search-query
+   (list (notdeft-search-query)
          (notdeft-search-order-by)))
   (when query
     (notdeft-search-find-file :query query :order-by order-by)))
@@ -147,7 +164,7 @@ Do that by showing a `message'."
 (transient-define-suffix notdeft-search-ido-find-file (query order-by)
   "Transient adapter for `notdeft-xapian-ido-search-find-file'."
   (interactive
-   (list notdeft-search-query
+   (list (notdeft-search-query)
          (notdeft-search-order-by)))
   (when query
     (notdeft-xapian-ido-search-find-file :query query :order-by order-by)))
@@ -155,7 +172,7 @@ Do that by showing a `message'."
 (transient-define-suffix notdeft-search-lucky-find-file (query order-by)
   "Transient adapter for `notdeft-lucky-find-file'."
   (interactive
-   (list notdeft-search-query
+   (list (notdeft-search-query)
          (notdeft-search-order-by)))
   (when query
     (notdeft-lucky-find-file :query query :order-by order-by)))
@@ -163,7 +180,7 @@ Do that by showing a `message'."
 (transient-define-suffix notdeft-search-open-query (query order-by new-buffer)
   "Transient adapter for `notdeft-open-search'."
   (interactive
-   (list notdeft-search-query
+   (list (notdeft-search-query)
          (notdeft-search-order-by)
          (notdeft-search-option-enabled-p "--new-buffer")))
   (when query
@@ -172,7 +189,7 @@ Do that by showing a `message'."
 (transient-define-suffix notdeft-search-notdeft-mode-open-query (query order-by new-buffer)
   "Transient adapter for `notdeft-mode-open-search'."
   (interactive
-   (list notdeft-search-query
+   (list (notdeft-search-query)
          (notdeft-search-order-by)
          (notdeft-search-option-enabled-p "--new-buffer")))
   (when query
@@ -206,8 +223,10 @@ variety of search and result presentation options and actions."
   (interactive)
   ;; We could also try falling back to `notdeft-string-from-region'
   ;; here, but it's also quick to press "r" to fill it in.
-  (setq notdeft-search-query (or (plist-get arguments :query)
-                                 (plist-get arguments :initial-query)))
+  (setq notdeft-search-arguments
+        (plist-put arguments :query
+                   (or (plist-get arguments :query)
+                       (plist-get arguments :initial-query))))
   (transient-setup 'notdeft-search))
 
 (provide 'notdeft-command)
