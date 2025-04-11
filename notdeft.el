@@ -1432,8 +1432,12 @@ Return nil if there is no such value."
 
 (defun notdeft-plist-put (plist property value)
   "To PLIST put PROPERTY VALUE, with functional update.
-Do not remove any duplicates."
-  (cons property (cons value plist)))
+Avoid duplication of the property entry."
+  (let ((tail (plist-member plist property)))
+    (when tail
+      (let ((t-len (length tail)))
+        (setq plist (append (butlast plist t-len) (cddr tail)))))
+    (cons property (cons value plist))))
 
 (defvar notdeft-notename-history nil
   "History of `notdeft-read-notename' notenames.
