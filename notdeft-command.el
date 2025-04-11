@@ -72,6 +72,7 @@ locally for a buffer.")
 
 (defun notdeft-sample-string (str)
   "Return STR or a shorter sample of it."
+  (declare (pure t))
   (when str
     (let ((len (length str)))
       (if (<= len 15)

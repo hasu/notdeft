@@ -1420,12 +1420,14 @@ with a \\[universal-argument] prefix argument."
 
 (defun notdeft-plist-get (plist property default)
   "From PLIST get PROPERTY value, or DEFAULT value."
+  (declare (pure t))
   (let ((x (plist-member plist property)))
     (if x (cadr x) default)))
 
 (defun notdeft-plist-get-some (plist &rest properties)
   "From PLIST the first non-nil value of PROPERTIES.
 Return nil if there is no such value."
+  (declare (pure t))
   (cl-some (lambda (property)
              (plist-get plist property))
            properties))
@@ -1433,11 +1435,25 @@ Return nil if there is no such value."
 (defun notdeft-plist-put (plist property value)
   "To PLIST put PROPERTY VALUE, with functional update.
 Avoid duplication of the property entry."
+  (declare (pure t))
   (let ((tail (plist-member plist property)))
     (when tail
       (let ((t-len (length tail)))
         (setq plist (append (butlast plist t-len) (cddr tail)))))
     (cons property (cons value plist))))
+
+(defun notdeft-plist-put-multi (plist &rest entries)
+  "To PLIST put property ENTRIES, with functional update.
+For each entry pass property key and value as separate
+arguments."
+  (declare (pure t))
+  (while entries
+    (let ((k (car entries)))
+      (setq entries (cdr entries))
+      (let ((v (car entries)))
+        (setq entries (cdr entries))
+        (setq plist (notdeft-plist-put plist k v)))))
+  plist)
 
 (defvar notdeft-notename-history nil
   "History of `notdeft-read-notename' notenames.
