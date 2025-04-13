@@ -77,48 +77,53 @@ Like `org-store-link', store the link into `org-stored-links'."
 	(message "Stored: %s" (or desc link))))))
 
 ;;;###autoload
-(defun notdeft-org-link-existing-note (notename &optional desc region)
+(defun notdeft-org-link-existing-note (notename &optional description region)
   "Create a \"deft:\" link to an existing note.
-Link to a note by NOTENAME, inserting a link description if DESC
-is non-nil. Insert the created link at point, unless REGION in
-specified \(as a list of two positions), in which case replace
-that region. When called interactively: offer a list of notes
-from which to choose the link target; query for a note
-description, offering to use the text of any active region as the
-title, or the result of calling `notdeft-describe-link'
-otherwise; use any active region as REGION; if one
-\\[universal-argument] is given, then insert a link without DESC;
-and if two \\[universal-argument]s are given, use the title of
-any note as the description. If multiple notes have the same
-NOTENAME, pick any one of them for deriving a description."
+Link to a note by NOTENAME, inserting a link DESCRIPTION if it is
+non-nil. Insert the created link at point, unless REGION in
+specified (as a list of two positions), in which case replace
+that region. When called interactively, use `notdeft-select-file'
+to choose the link target NOTENAME. Query for a note DESCRIPTION,
+offering to use the text of any active REGION as the title, or
+the result of calling `notdeft-describe-link' otherwise. If
+multiple notes have the same NOTENAME, pick any one of them for
+deriving a description. When called with one
+\\[universal-argument], ask for the DESCRIPTION first, and then
+offer to use that as any search query. When called with two
+\\[universal-argument]s offer to use a `notdeft-describe-link'
+DESCRIPTION even if there is an active region."
   (interactive
    (progn
      (barf-if-buffer-read-only)
      (let* ((pfx (prefix-numeric-value current-prefix-arg))
+            (desc-first (= pfx 4))
 	    (region (when mark-active
 		      (list (region-beginning) (region-end))))
-	    (desc (and region (= pfx 1)
-		       (apply #'buffer-substring-no-properties region)))
+	    (region-str (when region
+                          (notdeft-chomp-nullify
+		           (apply #'buffer-substring-no-properties region))))
+            (description (if desc-first
+                             (notdeft-org-read-link-description region-str)
+                           region-str))
 	    (file
-	     ;; Select note before prompting for any description.
-	     ;; Provide any region text as a selection hint.
-	     (let ((notdeft-xapian-order-by 'relevance))
-	       (notdeft-select-file :initial-query desc)))
-	    (desc
-	     (when (and file (/= pfx 4))
-	       (notdeft-org-read-link-description
-		(or desc
-		    (pcase pfx
-		      (1 (notdeft-chomp-nullify
-			  (funcall notdeft-describe-link file)))
-		      (16 (notdeft-title-from-file-content file)))))))
+	     (notdeft-select-file :initial-query description :order-by 'relevance))
+	    (description
+             (when file
+	       (if (and desc-first description)
+                   description
+	         (notdeft-org-read-link-description
+                  (if (or (not description) (= pfx 16))
+                      (notdeft-chomp-nullify
+		       (funcall notdeft-describe-link file))
+                    description)))))
 	    (notename (when file
 			(file-name-nondirectory file))))
-       (list notename desc region))))
+       (list notename description region)))
+   org-mode)
   (when notename
     (when region
       (apply #'delete-region region))
-    (insert (notdeft-make-deft-link notename desc))))
+    (insert (notdeft-make-deft-link notename description))))
 
 (defalias 'notdeft-insert-org-link
   #'notdeft-org-link-existing-note
