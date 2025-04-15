@@ -13,3 +13,5 @@ compile_flags.txt
 /download/
 /PKGNAMEVER
 .notdeft-db/
+emacs-run-*/
+user-*
