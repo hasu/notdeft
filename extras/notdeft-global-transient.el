@@ -1,4 +1,4 @@
-;;; notdeft-transient.el --- NotDeft transient menu -*- lexical-binding: t; -*-
+;;; notdeft-global-transient.el --- NotDeft transient menu -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025 by the authors.
 ;; All rights reserved.
@@ -52,9 +52,9 @@
     ("." "NotDeft" notdeft)
     ("q" "Quit" transient-quit-one)]])
 
-(provide 'notdeft-transient)
+(provide 'notdeft-global-transient)
 
-;;; notdeft-transient.el ends here
+;;; notdeft-global-transient.el ends here
 
 ;; Redistribution and use in source and binary forms, with or without
 ;; modification, are permitted provided that the following conditions
