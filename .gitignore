@@ -5,7 +5,7 @@
 .DS_Store
 /xapian/notdeft-xapian
 *.elc
-notdeft-autoloads.el
+*-autoloads.el
 local.mk
 /README.html
 .dir-locals.el

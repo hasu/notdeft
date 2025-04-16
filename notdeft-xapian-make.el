@@ -110,13 +110,11 @@ source file is newer."
 		(nth 5 (file-attributes exe-file))
 		(nth 5 (file-attributes cxx-file)))))))))
 
-;;;###autoload
 (defun notdeft-xapian-compile-program (program)
   "Compile the notdeft-xapian program.
 Use notdeft-xapian sources in `notdeft-xapian-home', and build
 the PROGRAM, which must be specified as an absolute path. On
-success return PROGRAM, and raise an `error'."
-  (interactive)
+success return PROGRAM, and otherwise raise an `error'."
   (unless (file-directory-p notdeft-xapian-home)
     (error "Cannot locate notdeft-xapian sources"))
   (let* ((exe-file program)
@@ -142,8 +140,9 @@ exists, and the target path `notdeft-xapian-program' or
 `notdeft-xapian-program-install-path' is non-nil. In that case
 generate the executable with the target path, but only if any
 existing executable appears to be uncurrent, or if the FORCE flag
-is non-nil. Return the absolute target path if it is known, even
-if the program could not be compiled."
+is non-nil, or if called interactively with
+\\[universal-argument]. Return the absolute target path if it is
+known, even if the program could not be compiled."
   (interactive "P")
   (when (or notdeft-xapian-program-install-path notdeft-xapian-program)
     (when (and notdeft-xapian-home

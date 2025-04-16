@@ -161,7 +161,7 @@
 ;; To enable the `notdeft-xapian` program to be compiled from within
 ;; Emacs, you may specify a suitable shell command by setting the
 ;; variable `notdeft-xapian-program-compile-command-format'. After
-;; that you can use the command `notdeft-xapian-compile-program' to
+;; that you can use the command `notdeft-xapian-make-program' to
 ;; build the program. It even possible to instruct the compilation to
 ;; happen transparently, by having your configuration include
 ;;

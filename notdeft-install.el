@@ -24,47 +24,71 @@ Check CND at expansion time and emit either THN or ELS."
     (declare (indent 2))
     (if (eval cnd lexical-binding) thn els)))
 
-(defun notdeft-install-autoloads ()
-  "Generate NotDeft autoloads and load them."
-  (let ((home (file-name-directory
-	       (locate-library "notdeft-install"))))
-    (let ((output-file
-	   (expand-file-name "notdeft-autoloads.el" home)))
+(defun notdeft-sub--install-autoloads (feature output-name)
+  "Generate autoloads for package.
+Locate the package by looking for contained FEATURE. Write autoloads
+into file of OUTPUT-NAME."
+  (when-let ((lib (locate-library feature)))
+    (let* ((dir (file-name-directory lib))
+           (output-file (expand-file-name output-name dir)))
       ;; Emacs 28.1 or later is required for
       ;; `make-directory-autoloads'. That in turn is already
       ;; deprecated in Emacs 29.1 in favor of `loaddefs-generate'.
       (notdeft-static-if (fboundp 'loaddefs-generate)
-          (loaddefs-generate home output-file)
-        (make-directory-autoloads home output-file)))
-    (load "notdeft-autoloads.el" nil nil t)))
+          (loaddefs-generate dir output-file)
+        (make-directory-autoloads dir output-file)))
+    (load output-name nil nil t)))
+
+(defun notdeft-transient-installable-p ()
+  "Whether `notdeft-transient' dependencies are installed."
+  (and (require 'transient nil t)
+       (boundp 'transient-version)
+       (let ((ver (version-to-list transient-version)))
+         (version-list-<= '(0 5) ver))))
+
+(defun notdeft-install-autoloads ()
+  "Generate NotDeft autoloads and load them.
+Do that for `notdeft', and also for `notdeft-ivy' and
+`notdeft-transient' if they exist and their dependencies are available
+and installed."
+  (notdeft-sub--install-autoloads "notdeft" "notdeft-autoloads.el")
+  (when (require 'ivy nil t)
+    (notdeft-sub--install-autoloads "notdeft-ivy" "notdeft-ivy-autoloads.el"))
+  (when (notdeft-transient-installable-p)
+    (notdeft-sub--install-autoloads "notdeft-transient" "notdeft-transient-autoloads.el")))
+
+(defun notdeft-sub--byte-compile (sources feature force)
+  "Byte-compile NotDeft SOURCES for FEATURE.
+Do that only if the FEATURE can be located. Optionally FORCE the
+compilation."
+  (when-let ((lib (locate-library feature)))
+    (let ((dir (file-name-directory lib)))
+      (dolist (file sources)
+        (let ((file (expand-file-name file dir)))
+          (byte-recompile-file file force 0))))))
 
 (defun notdeft-install-bytecode (&optional force)
   "Generate NotDeft Emacs Lisp \".elc\" files.
 Optionally FORCE byte-compilation even when existing bytecode
 files appear to be up-to-date."
-  (let ((dir (file-name-directory
-	      (locate-library "notdeft-install"))))
-    (notdeft-install--byte-compile dir force)))
-
-(defun notdeft-install--byte-compile (dir force)
-  "Byte-compile NotDeft sources in DIR.
-The directory and all the expected source files must exist. Optionally
-FORCE the compilation."
-  (let ((files '("notdeft-base.el"
-                 "notdeft-util.el"
-                 "notdeft-xapian.el"
-                 "notdeft.el"
-                 "notdeft-global.el"
-                 "notdeft-org.el"
-                 "notdeft-org9.el"
-                 "notdeft-xapian-make.el"
-                 "notdeft-install.el"
-                 "notdeft-mode.el"
-                 "notdeft-path.el"
-                 "notdeft-develop.el")))
-    (dolist (file files)
-      (let ((file (expand-file-name file dir)))
-        (byte-recompile-file file force 0)))))
+  (notdeft-sub--byte-compile
+   '("notdeft-base.el"
+     "notdeft-util.el"
+     "notdeft-xapian.el"
+     "notdeft.el"
+     "notdeft-global.el"
+     "notdeft-org.el"
+     "notdeft-org9.el"
+     "notdeft-xapian-make.el"
+     "notdeft-install.el"
+     "notdeft-mode.el"
+     "notdeft-path.el"
+     "notdeft-develop.el")
+   "notdeft" force)
+  (when (require 'ivy nil t)
+    (notdeft-sub--byte-compile '("notdeft-ivy.el") "notdeft-ivy" force))
+  (when (notdeft-transient-installable-p)
+    (notdeft-sub--byte-compile '("notdeft-transient.el") "notdeft-transient" force)))
 
 ;;;###autoload
 (defun notdeft-install (&optional force)
