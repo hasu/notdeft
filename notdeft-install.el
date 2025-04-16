@@ -61,8 +61,7 @@ FORCE the compilation."
                  "notdeft-install.el"
                  "notdeft-mode.el"
                  "notdeft-path.el"
-                 "notdeft-develop.el"
-                 "notdeft-command.el")))
+                 "notdeft-develop.el")))
     (dolist (file files)
       (let ((file (expand-file-name file dir)))
         (byte-recompile-file file force 0)))))

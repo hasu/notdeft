@@ -1,6 +1,7 @@
-;;; notdeft-command.el --- NotDeft commands with Transient menus  -*- lexical-binding: t; -*-
+;;; notdeft-transient.el --- NotDeft commands with Transient menus  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
+;; Package-Requires: (notdeft (transient "0.5.0"))
 ;; See end of file for licensing information.
 
 ;;; Commentary:
@@ -14,7 +15,9 @@
 ;; search results quicker and more directly.
 ;;
 ;; This feature requires Transient 0.5.0 or later, for the
-;; refresh-suffixes support.
+;; refresh-suffixes support. Transient is built into Emacs 28.1 and
+;; later, but not necessarily in a recent enough version, and
+;; `package-install' may not always want to upgrade built-in packages.
 
 ;;; Code:
 
@@ -206,7 +209,7 @@ Return the transient arguments value."
      (when (memq order-by '(relevance time name))
        (list (format "--order-by=%s" order-by))))))
 
-;;;###autoload (autoload 'notdeft-search "notdeft-command" nil t)
+;;;###autoload (autoload 'notdeft-search "notdeft-transient" nil t)
 (transient-define-prefix notdeft-search (&rest arguments)
   "Search for files matching a query.
 Accept ARGUMENTS as for `notdeft-open-query', but mostly ignore
@@ -246,9 +249,9 @@ variety of search and result presentation options and actions."
           (notdeft-plist-put arguments :query query)))
   (transient-setup 'notdeft-search))
 
-(provide 'notdeft-command)
+(provide 'notdeft-transient)
 
-;;; notdeft-command.el ends here
+;;; notdeft-transient.el ends here
 
 ;; NotDeft, a note manager for Emacs
 ;; Copyright (C) 2025  Tero Hasu
@@ -264,4 +267,4 @@ variety of search and result presentation options and actions."
 ;; GNU General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
