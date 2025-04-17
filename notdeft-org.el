@@ -77,6 +77,19 @@ Like `org-store-link', store the link into `org-stored-links'."
 	(message "Stored: %s" (or desc link))))))
 
 ;;;###autoload
+(defun notdeft-org-save-deft-link-as-kill ()
+  "Copy a \"deft:\" link for the current note.
+Add it to the front of the kill ring. Save only the link without
+the description, unlike with `notdeft-org-store-deft-link'."
+  (interactive)
+  (let ((old-file (notdeft-current-filename t t)))
+    (when old-file
+      (let* ((name (file-name-nondirectory old-file))
+	     (link (concat "deft:" name)))
+        (kill-new link)
+	(message "Copied: %s" link)))))
+
+;;;###autoload
 (defun notdeft-org-link-existing-note (notename &optional description region)
   "Create a \"deft:\" link to an existing note.
 Link to a note by NOTENAME, inserting a link DESCRIPTION if it is
