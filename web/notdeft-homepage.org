@@ -23,45 +23,6 @@ https://github.com/hasu/notdeft
 
 #+TOC: headlines 2
 
-* Quick Start
-:PROPERTIES:
-:CUSTOM_ID: quick-start
-:END:
-
-For the impatient, this section outlines one way of downloading, installing and setting up NotDeft.
-
-Open a terminal, and =cd= into your home directory. Download the source code into some directory with
-: git clone https://github.com/hasu/notdeft.git
-
-Then prepare and byte-compile Emacs Lisp files with the commands
-: cd notdeft
-: make
-where =make= is assumed to invoke GNU Make.
-
-Then build the Xapian backend by doing
-: cd xapian
-: make
-If the =make= command fails, then you will need to ensure that you have the required libraries installed, and find the right C++ compiler incantation for building the =notdeft-xapian= program on your system. A notable library requirement for compiling the program is [[http://tclap.sourceforge.net/][TCLAP]].
-
-To make NotDeft loadable in Emacs, add the following code to your Emacs startup file (e.g., “~/.emacs”):
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path "~/notdeft")
-  (add-to-list 'load-path "~/notdeft/extras")
-  (load "notdeft-example")
-#+END_SRC
-The “notdeft-example.el” file is a sample configuration for NotDeft, which sets up NotDeft for use with Org mode based note files, also enabling some optional components of NotDeft, and setting up some keybindings. It may be a useful starting point for a personal configuration.
-
-Create a “~/.deft” directory, and copy some “.org” files there.
-
-Launch Emacs with
-: emacs -f notdeft
-
-*Press =TAB= to enter a search query*, and type characters to do further filtering of the results. Press =RET= to select a file to open. Use =C-c f1= to see other available commands.
-
-To configure =notdeft-note-mode= minor mode for use automatically in note buffers, add the required directory local variable to “~/.deft” by entering the command =f6 a d l v=, and by saving the resulting file.
-
-For other ways to install, configure, and use NotDeft, see the rest of this page.
-
 * NotDeft's Deft Origins
 
 NotDeft is derived from Deft version 0.3, but differs in several notable ways:
@@ -75,6 +36,9 @@ NotDeft is derived from Deft version 0.3, but differs in several notable ways:
 NotDeft is not Deft---it aims for wide utility rather than the user experience of a Notational Velocity type application. The added complication of having two stages (query, then filter) to the process of looking for interesting files makes NotDeft less simple and intuitive than Deft, as does having multiple directories, modalities, and buffers.
 
 * NotDeft Installation
+:PROPERTIES:
+:CUSTOM_ID: installation
+:END:
 
 NotDeft can be installed either manually, or as a package.
 

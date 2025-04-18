@@ -2,53 +2,108 @@
 #+AUTHOR: Tero Hasu
 #+OPTIONS: toc:nil
 
-/NotDeft/ is a spin-off of [[https://jblevins.org/projects/deft/][Deft]], an “Emacs mode for quickly browsing, filtering, and editing directories of plain text notes.” NotDeft retains functionality similar to Deft's, albeit with less configurability. In addition, NotDeft features efficient, local, [[https://xapian.org/][Xapian]]-engine-based free-text search over potentially very large numbers of note files; in that respect it is like the [[https://notmuchmail.org/][Notmuch]] Emacs mode for managing email.
+/NotDeft/ is an [[https://www.gnu.org/software/emacs/][Emacs]] package for searching and managing collections of plain text note files. It features efficient, local, [[https://xapian.org/][Xapian]] engine based search over potentially very large numbers of note files; in that respect it is not much unlike the [[https://notmuchmail.org/][Notmuch]] Emacs mode for managing email.
 
-NotDeft is not as deft in note management as Deft. One reason for this is that NotDeft is designed to support managing of multiple directories of notes. Another complication is that locating the desired notes is a two-stage process, as it entails both searching for a set of notes by entering a query, and then further narrowing down the result set through interactive filtering.
+NotDeft was originally based on [[https://jblevins.org/projects/deft/][Deft]], an “Emacs mode for quickly browsing, filtering, and editing directories of plain text notes.” NotDeft still includes =notdeft-mode= as a =deft-mode= style interface for browsing and filtering search results, but it is now just one of many ways to search and navigate between notes in NotDeft. A command such as =M-x notdeft-select-find-file= may be quicker in the common case of one just wanting to find a particular note for editing.
 
 [[file:images/notdeft-screenshot-query-and-filter.png]]
 
-NotDeft does not aim for the user interaction simplicity of applications like Deft and Notational Velocity---instead, it intends to provide global note search and manipulation functionality, accessible from various Emacs buffers and Emacs-based applications.
+NotDeft does not aim for the user interaction simplicity of applications like Deft and Notational Velocity---instead, it intends to provide global note search and manipulation functionality, accessible from various Emacs buffers and Emacs-based applications. A motivation for having that functionality was the desire to allow the user to focus on worthwhile things like reading and reasoning and creating, supported by relevant collected information, but without requiring much time or effort on organization or retrieval of that information.
+
+A popular Emacs-hosted tool for note taking and project planning is [[https://orgmode.org/][Org mode]], and NotDeft specifically aims to allow for a degree of disorganization in Org, such that notes can be added to the collection without much thought of directory hierarchies or tagging. Even without a system of organization it should still be possible to find notes in terms of free-text search. Navigation between notes via Org links can nicely complement search, and NotDeft features specific support for linking of Org notes either in terms of (non-directory) file names or search queries, without the fragility and maintenance burden of links tied to specific locations within a filesystem.
 
 * Quick Start
 
-Open a terminal, and =cd= into your home directory. Download the source code into some directory with
-: git clone https://github.com/hasu/notdeft.git
+NotDeft can be installed for example with its own =notdeft-install= feature or [[#straight][with straight.el]], as we describe here. For further details about [[./web/notdeft-homepage.org::#installation][installing]], [[file:web/notdeft-homepage.org::#configuration][configuring]], and using NotDeft, see the [[./web/notdeft-homepage.org][documentation]].
 
-Then prepare NotDeft's Emacs Lisp files for use with the commands
-: cd notdeft
-: make
-where =make= is assumed to invoke GNU Make.
+** Pre-Requisites
 
-Then build the Xapian backend by doing
-: cd xapian
-: make
-If the =make= command fails, then you will need to ensure that you have the required libraries installed, and find the right C++ compiler incantation for building the =notdeft-xapian= program on your system. A notable library requirement for compiling the program is [[http://tclap.sourceforge.net/][TCLAP]].
+For operation NotDeft /requires/ a =notdeft-xapian= backend program written in C++. To allow it to be built you should ensure that you have a C++ compiler and the required libraries installed. In addition to Xapian a notable library requirement for compiling the program is [[http://tclap.sourceforge.net/][TCLAP]]. On a Debian-based system, for example, you would probably need to have installed the packages g++, pkg-config, libtclap-dev, and libxapian-dev.
 
-To make NotDeft loadable in Emacs, add the following code to your Emacs startup file (e.g., “~/.emacs”):
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path "~/notdeft")
-  (add-to-list 'load-path "~/notdeft/extras")
+For configuring and testing compilation read on about using =notdeft-xapian-make= and =compile= for that purpose.
+
+** Manual Installation
+
+A portable way to install NotDeft is manually with the help of =notdeft-install=. To do that first fetch the code with
+#+begin_src shell :results silent
+  git clone https://github.com/hasu/notdeft.git
+#+end_src
+
+To make NotDeft loadable in Emacs evaluate the following code, and perhaps also add it to your Emacs init file (e.g., “~/.emacs”), replacing "notdeft" with the absolute path of the directory that got cloned:
+#+BEGIN_SRC emacs-lisp :results silent
+  (dolist (dir '("." "extras" "ivy" "transient"))
+    (add-to-list 'load-path (expand-file-name dir "notdeft")))
+#+END_SRC
+
+With the =notdeft-xapian= dependencies installed you may want to also check that you have the right C++ compiler incantation configured for building the =notdeft-xapian= executable for your system. You can do that by evaluating
+#+begin_src emacs-lisp :results silent
+  (require 'notdeft-xapian-make)
+  (customize-option 'notdeft-xapian-program-compile-command-format)
+#+end_src
+
+NotDeft includes a =notdeft-xapian-make-program-when-uncurrent= action that can be registered to do the compilation on demand. Still, it can be instructive to first see feedback from the Emacs =compile= command, which you can invoke by evaluating
+#+begin_src emacs-lisp :results silent
+  (compile (notdeft-xapian-program-compile-command))
+#+end_src
+which will let you browse any errors or warnings issued by the compiler.
+
+With compilation working you should be able to complete initial NotDeft installation and setup by evaluating
+#+BEGIN_SRC emacs-lisp :results silent
+  (require 'notdeft-install)
+  (notdeft-install)
+#+END_SRC
+where the =notdeft-install= function generates autoloads and does Emacs Lisp byte-compilation.
+
+** Example Configuration
+
+The NotDeft source code includes a [[./extras/notdeft-example.el][notdeft-example.el]] configuration, which you can load with
+#+BEGIN_SRC emacs-lisp :results silent
   (load "notdeft-example")
 #+END_SRC
-The [[./extras/notdeft-example.el][notdeft-example.el]] file is a sample configuration for NotDeft, which sets up NotDeft for use with Org mode based note files, also enabling some optional components of NotDeft, and setting up some keybindings. It may be a useful starting point for a personal configuration.
+in order to have it set up NotDeft for use with Org mode based note files, also enabling some optional components of NotDeft, and setting up some keybindings. The code in that file may be a useful starting point for a personal configuration.
 
-Create a “~/.deft” directory, and copy some “.org” files there.
+** First Use
 
-Launch Emacs with
-: emacs -f notdeft
+With NotDeft installed it is time to create a “~/.deft” directory for your note collection, and copy some “.org” files there.
 
-Press =TAB= to enter a search query, and type characters to do further filtering of the results. Press =RET= to select a file to open. Use =C-c f1= to see other available commands.
+After that you can try doing a search with =M-x notdeft-select-find-file= (=<f6> C-f=), or browsing your notes in a dedicated mode with =M-x notdeft= (=<f6> e=). Both of those commands and more have bindings in the =notdeft-global-map= keymap.
 
-To configure =notdeft-note-mode= minor mode for use automatically in note buffers, add the required directory local variable to “~/.deft” by entering the command =f6 a d l v=, and by saving the resulting file.
+In a =notdeft-mode= buffer you can press =TAB= to enter a search query, and type characters to do further filtering of the results. Press =RET= to select a file to open. To see other commands of the =notdeft-mode-map= you can use =C-c <f1>=.
 
-For other ways to install, configure, and use NotDeft, see the [[https://tero.hasu.is/notdeft/][documentation]].
+** Installation and Configuration with straight.el
+:PROPERTIES:
+:CUSTOM_ID: straight
+:END:
+
+Those using [[https://github.com/radian-software/straight.el][straight.el]] and [[https://github.com/jwiegley/use-package][use-package]] can do cloning, byte-compilation, loading, and configuration of the =notdeft= package conveniently with a single =use-package= declaration. For basic configuration similar to the above one could
+#+begin_src emacs-lisp :results silent
+  (use-package notdeft
+    :straight (notdeft
+	       :type git :host github :repo "hasu/notdeft"
+	       :files ("notdeft*.el" "xapian"))
+    :defer t
+    :init
+    (require 'notdeft-global) ;; for `notdeft-global-map'
+    (global-set-key [f6] 'notdeft-global-map) ;; choose a prefix key
+    (setq notdeft-open-query-function 'notdeft-mode-open-query)
+    (eval-after-load 'org ;; only if using Org format notes
+      (lambda ()
+	(require 'notdeft-org9) ;; for "deft:" and "notdeft:" link schemes
+	(add-hook 'org-mode-hook 'notdeft-note-mode-enable)))
+    :config
+    (notdeft-xapian-make-program-when-uncurrent))
+#+end_src
+
+* License
+
+NotDeft is open source software. Its Emacs Lisp features are made available under [[./LICENSE-GPLv3.txt][GPL version 3]] or later, although parts are covered by the BSD license (with text as included in source files where applicable).
+
+The source code of the =notdeft-xapian= C++ program is turn is made available under [[./xapian/LICENSE-GPLv2.txt][GPL version 2]] or later.
 
 * See Also
 
-- https://tero.hasu.is/notdeft/ :: documentation
-- https://tero.hasu.is/notdeft/download/ :: installable Emacs packages
+- [[./web/notdeft-homepage.org]["notdeft-homepage.org"]] :: documentation
 - https://tero.hasu.is/tags/notdeft/ :: related blog posts
 - https://github.com/hasu/notdeft :: source code repository
-- [[./notdeft.el][“notdeft.el”]] :: some more documentation (in comments)
-- [[https://xapian.org/][Xapian]] and [[https://jblevins.org/projects/deft/][Deft]] :: related software
+- [[./notdeft.el][“notdeft.el”]] and [[./notdeft-mode.el][“notdeft-mode.el”]] :: some more documentation (in comments)
+- [[https://xapian.org/][Xapian]] and [[https://jblevins.org/projects/deft/][Deft]] and [[https://orgmode.org/][Org mode]] :: related software and their documentation

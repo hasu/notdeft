@@ -1,15 +1,9 @@
-;; Full path of "notdeft-xapian" executable.
-(let ((x
-       (let ((default-directory
-	       (file-name-directory
-		(file-truename (locate-library "notdeft")))))
-	 (file-truename "xapian/notdeft-xapian"))))
-  (setq notdeft-xapian-program x))
-
-;; As an alternative to the above, you can try building and
-;; configuring "notdeft-xapian" on demand, but on most systems this
-;; will not succeed out of the box.
-;(add-hook 'notdeft-load-hook 'notdeft-xapian-make-program-when-uncurrent)
+;; You can configure building and configuring the "notdeft-xapian"
+;; executable on demand, but on most systems this will not succeed out
+;; of the box, and so please check that
+;; `notdeft-xapian-program-compile-command-format' is defined
+;; correctly for your system.
+(add-hook 'notdeft-load-hook 'notdeft-xapian-make-program-when-uncurrent)
 
 ;; Potentially enable `notdeft-note-mode' for note editing major
 ;; modes. You may want to register with different hooks here if you
