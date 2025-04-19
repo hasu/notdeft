@@ -82,6 +82,7 @@ files appear to be up-to-date."
      "notdeft-xapian-make.el"
      "notdeft-install.el"
      "notdeft-mode.el"
+     "notdeft-config.el"
      "notdeft-path.el"
      "notdeft-develop.el")
    "notdeft" force)
