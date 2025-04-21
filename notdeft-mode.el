@@ -878,7 +878,7 @@ called with prefix argument(s), and kill ALL if called with two
     (define-key map (kbd "<C-S-backspace>") #'notdeft-filter-clear)
     ;; File opening
     (define-key map (kbd "RET") #'notdeft-complete)
-    (define-key map (kbd "C-RET") #'notdeft-mode-open-file-other-window)
+    (define-key map (kbd "C-c o") #'notdeft-mode-open-file-other-window)
     ;; File creation
     (define-key map (kbd "C-c C-n") #'notdeft-new-file)
     (define-key map (kbd "C-c C-m") #'notdeft-new-file-named)
