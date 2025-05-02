@@ -86,6 +86,15 @@ locally for a buffer.")
       (notdeft-search-set-query
        (if query (concat tag " AND " query) tag)))))
 
+(transient-define-suffix notdeft-search-query-as-phrase ()
+  "Turn any query into a phrase query."
+  :transient t
+  :if 'notdeft-search-query
+  (interactive)
+  (when-let ((query (notdeft-search-query)))
+    (notdeft-search-set-query
+     (notdeft-string-as-phrase-query query))))
+
 (defun notdeft-sample-string (str)
   "Return STR or a shorter sample of it."
   (declare (pure t))
@@ -228,6 +237,7 @@ variety of search and result presentation options and actions."
    ("c" "Clear query" notdeft-search-query-clear)
    ("e" "Edit query" notdeft-search-query-edit)
    ("k" "Require keyword" notdeft-search-query-add-tag)
+   ("q" "Quote as phrase" notdeft-search-query-as-phrase)
    ("r" notdeft-search-use-region)
    ("t" notdeft-search-use-title)]
   ["Action"

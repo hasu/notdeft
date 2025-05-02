@@ -232,17 +232,25 @@ use the latest history entry, without asking for a description."
         (insert (notdeft-make-notdeft-link query desc))))))
 
 ;;;###autoload
-(defun notdeft-org-search-for-heading (&optional as-phrase)
+(defun notdeft-org-search-for-heading (&optional as-phrase rich)
   "Query for current Org heading text.
-Optionally execute the search as a phrase search if AS-PHRASE is
-non-nil or when called interactively with a
-\\[universal-argument] prefix argument."
-  (interactive "P" org-mode)
-  (let ((title
-	 (save-excursion
-	   (org-back-to-heading t)
-	   (nth 4 (org-heading-components)))))
-    (notdeft-search-for-title title as-phrase)))
+Optionally execute the search AS-PHRASE search if called
+interactively with a \\[universal-argument] prefix argument, or
+with RICH options if called with two such arguments."
+  (interactive
+   (let ((prefix (prefix-numeric-value current-prefix-arg)))
+     (list (= prefix 4)
+	   (>= prefix 16)))
+   org-mode)
+  (when-let ((title
+              (notdeft-chomp-nullify
+	       (save-excursion
+	         (org-back-to-heading t)
+	         (nth 4 (org-heading-components))))))
+    (notdeft-open-query :query (if as-phrase
+                                   (notdeft-string-as-phrase-query title)
+                                 title)
+                        :rich rich)))
 
 ;;;###autoload
 (defun notdeft-org-move-subtree-into-file (&optional pfx)

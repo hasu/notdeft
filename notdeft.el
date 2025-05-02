@@ -2106,29 +2106,24 @@ returns no results if there is no `notdeft-xapian-program'."
 	 (str (concat "\"" str "\"")))
     str))
 
-(defun notdeft-search-for-title (title &optional as-phrase)
-  "Query for the specified TITLE.
-Optionally execute the search as a phrase search if AS-PHRASE is
-non-nil."
-  (when title
-    (let ((title (notdeft-chomp title)))
-      (unless (string-equal title "")
-        (notdeft-open-query
-         :query (if as-phrase
-                    (notdeft-string-as-phrase-query title)
-                  title))))))
-
 ;;;###autoload
-(defun notdeft-search-for-note-title (buffer &optional as-phrase)
+(defun notdeft-search-for-note-title (buffer &optional as-phrase rich)
   "Query for the title of the note in BUFFER.
 Use the title of the `current-buffer' if called interactively. Do
 nothing if there is no (non-empty) title. Optionally execute
-AS-PHRASE search, also when called interactively with a
-\\[universal-argument] prefix argument."
+AS-PHRASE search when called interactively with a
+\\[universal-argument] prefix argument, or as a RICH search if
+called with two such arguments."
   (interactive
-   (list (current-buffer) current-prefix-arg))
-  (let ((title (notdeft-buffer-title buffer nil t)))
-    (notdeft-search-for-title title as-phrase)))
+   (let ((prefix (prefix-numeric-value current-prefix-arg)))
+     (list (current-buffer)
+           (= prefix 4)
+	   (>= prefix 16))))
+  (when-let ((title (notdeft-buffer-title buffer nil t)))
+    (notdeft-open-query :query (if as-phrase
+                                   (notdeft-string-as-phrase-query title)
+                                 title)
+                        :rich rich)))
 
 (provide 'notdeft)
 
