@@ -1,7 +1,7 @@
 ;;; notdeft-transient.el --- NotDeft commands with Transient menus  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
-;; Package-Requires: (notdeft (transient "0.5.0"))
+;; Package-Requires: (notdeft seq (transient "0.5.0"))
 ;; See end of file for licensing information.
 
 ;;; Commentary:
@@ -23,6 +23,7 @@
 
 (require 'notdeft)
 (require 'notdeft-mode)
+(require 'seq)
 (require 'subr-x)
 (require 'transient)
 
@@ -38,7 +39,7 @@ locally for a buffer.")
 (defun notdeft-search-set-query (query)
   "Set QUERY to search arguments."
   (setq notdeft-search-arguments
-        (plist-put notdeft-search-arguments :query query)))
+        (notdeft-plist-put notdeft-search-arguments :query query)))
 
 (defun notdeft-value-faced (str)
   "STR with `transient-value' face."
@@ -140,14 +141,21 @@ locally for a buffer.")
 The value of `notdeft-search-query' is not included."
   (transient-args 'notdeft-search))
 
-(defun notdeft-search-option-enabled-p (option)
-  "Whether a `notdeft-search' OPTION is enabled."
-  (member option (notdeft-search-transient-args)))
-
-(defun notdeft-search-order-by ()
-  "Return an --order-by value symbol."
-  (when-let ((val (transient-arg-value "--order-by=" (notdeft-search-transient-args))))
-    (intern val)))
+(defun notdeft-search-transient-to-plist-args ()
+  "Get search arguments as a plist.
+Include any existing `notdeft-search-arguments' in addition to
+translated `notdeft-search-transient-args'."
+  (let ((args (notdeft-search-transient-args)))
+    (seq-reduce
+     (lambda (plist pair)
+       (if pair (notdeft-plist-put plist (car pair) (cdr pair)) plist))
+     (list (when-let ((v (transient-arg-value "--order-by=" args)))
+             (cons :order-by (intern v)))
+           (when (member "--new-buffer" args)
+             (cons :new-buffer t))
+           (when (member "--other-window" args)
+             (cons :other-window t)))
+     notdeft-search-arguments)))
 
 (transient-define-suffix notdeft-search-show-arguments ()
   "Show `notdeft-search' arguments in CLI style.
@@ -166,47 +174,40 @@ Do that by showing a `message'."
   (notdeft-refresh)
   (message "Search index refreshed"))
 
-(transient-define-suffix notdeft-search-select-find-file (query order-by)
-  "Transient adapter for `notdeft-select-find-file'."
-  (interactive
-   (list (notdeft-search-query)
-         (notdeft-search-order-by)))
-  (when query
-    (notdeft-select-find-file :query query :order-by order-by)))
+(transient-define-suffix notdeft-search-select-find-file (&rest arguments)
+  "Transient adapter for `notdeft-select-find-file'.
+Pass ARGUMENTS to it."
+  (interactive (notdeft-search-transient-to-plist-args))
+  (when (plist-get arguments :query)
+    (apply #'notdeft-select-find-file arguments)))
 
-(transient-define-suffix notdeft-search-ido-find-file (query order-by)
-  "Transient adapter for `notdeft-xapian-ido-search-find-file'."
-  (interactive
-   (list (notdeft-search-query)
-         (notdeft-search-order-by)))
-  (when query
-    (notdeft-xapian-ido-search-find-file :query query :order-by order-by)))
+(transient-define-suffix notdeft-search-ido-find-file (&rest arguments)
+  "Transient adapter for `notdeft-xapian-ido-search-find-file'.
+Pass ARGUMENTS to it."
+  (interactive (notdeft-search-transient-to-plist-args))
+  (when (plist-get arguments :query)
+    (apply #'notdeft-xapian-ido-search-find-file arguments)))
 
-(transient-define-suffix notdeft-search-lucky-find-file (query order-by)
-  "Transient adapter for `notdeft-lucky-find-file'."
-  (interactive
-   (list (notdeft-search-query)
-         (notdeft-search-order-by)))
-  (when query
-    (notdeft-lucky-find-file :query query :order-by order-by)))
+(transient-define-suffix notdeft-search-lucky-find-file (&rest arguments)
+  "Transient adapter for `notdeft-lucky-find-file'.
+Pass ARGUMENTS to it."
+  (interactive (notdeft-search-transient-to-plist-args))
+  (when (plist-get arguments :query)
+    (apply #'notdeft-lucky-find-file arguments)))
 
-(transient-define-suffix notdeft-search-open-query (query order-by new-buffer)
-  "Transient adapter for `notdeft-open-query'."
-  (interactive
-   (list (notdeft-search-query)
-         (notdeft-search-order-by)
-         (notdeft-search-option-enabled-p "--new-buffer")))
-  (when query
-    (notdeft-open-query :query query :order-by order-by :new-buffer new-buffer)))
+(transient-define-suffix notdeft-search-open-query (&rest arguments)
+  "Transient adapter for `notdeft-open-query'.
+Pass ARGUMENTS to it."
+  (interactive (notdeft-search-transient-to-plist-args))
+  (when (plist-get arguments :query)
+    (apply #'notdeft-open-query arguments)))
 
-(transient-define-suffix notdeft-search-notdeft-mode-open-query (query order-by new-buffer)
-  "Transient adapter for `notdeft-mode-open-query'."
-  (interactive
-   (list (notdeft-search-query)
-         (notdeft-search-order-by)
-         (notdeft-search-option-enabled-p "--new-buffer")))
-  (when query
-    (notdeft-mode-open-query :query query :order-by order-by :new-buffer new-buffer)))
+(transient-define-suffix notdeft-search-notdeft-mode-open-query (&rest arguments)
+  "Transient adapter for `notdeft-mode-open-query'.
+Pass ARGUMENTS to it."
+  (interactive (notdeft-search-transient-to-plist-args))
+  (when (plist-get arguments :query)
+    (apply #'notdeft-mode-open-query arguments)))
 
 (defun notdeft-search-initial-value ()
   "Initialize transient from `notdeft-search-arguments'.
@@ -214,6 +215,8 @@ Return the transient arguments value."
   (append
    (when (plist-get notdeft-search-arguments :new-buffer)
      '("--new-buffer"))
+   (when (plist-get notdeft-search-arguments :other-window)
+     '("--other-window"))
    (when-let ((order-by (plist-get notdeft-search-arguments :order-by)))
      (when (memq order-by '(relevance time name))
        (list (format "--order-by=%s" order-by))))))
@@ -231,7 +234,8 @@ variety of search and result presentation options and actions."
   :value #'notdeft-search-initial-value
   ["Options"
    ("-b" "Order results by" "--order-by=" :choices (relevance time name))
-   ("-n" "Create new NotDeft buffer" "--new-buffer")]
+   ("-n" "Create new NotDeft buffer" "--new-buffer")
+   ("-o" "Open file in other window" "--other-window")]
   ["Query"
    (notdeft-search-query-display)
    ("c" "Clear query" notdeft-search-query-clear)

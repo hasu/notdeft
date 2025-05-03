@@ -1939,7 +1939,8 @@ file with `notdeft-find-file'."
               (prog1
                   file
                 (when (and file (plist-get arguments :open))
-                  (notdeft-find-file file))))))))))
+                  (notdeft-find-file file (plist-get arguments :other-window)
+                                     (plist-get arguments :switch-window)))))))))))
 
 (defun notdeft-xapian-compread-search-find-file (&rest arguments)
   "Perform a Xapian search to find and open a file.
@@ -2089,7 +2090,9 @@ any `notdeft-buffer'."
 	 (files (notdeft-xapian-search-all-dirs query)))
     (if (not files)
 	(message "No matching notes found")
-      (notdeft-find-file (car files)))))
+      (let ((file (car files)))
+        (notdeft-find-file file (plist-get arguments :other-window)
+                           (plist-get arguments :switch-window))))))
 
 ;;;###autoload
 (defun notdeft-list-files-by-query (query)
