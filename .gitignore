@@ -7,7 +7,7 @@
 *.elc
 *-autoloads.el
 local.mk
-/README.html
+*.html
 .dir-locals.el
 compile_flags.txt
 /download/
