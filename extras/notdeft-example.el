@@ -49,8 +49,7 @@
     (define-key notdeft-mode-map (kbd "C-c S")
       #'notdeft-org-store-deft-link)))
 
-(require 'hydra nil t)
-(when (featurep 'hydra)
+(when (require 'hydra nil t)
   ;; Augment `notdeft-mode' bindings with a hydra.
   (autoload 'notdeft-mode-hydra/body "notdeft-mode-hydra" nil t)
   (add-hook 'notdeft-load-hook
@@ -62,8 +61,9 @@
   (autoload 'notdeft-global-hydra/body "notdeft-global-hydra" nil t)
   (define-key my-notdeft-global-map [(h)] #'notdeft-global-hydra/body))
 
-(require 'ivy nil t)
-(when (featurep 'ivy)
+(if (not (require 'ivy nil t))
+    ;; Use Ido if Ivy is not available.
+    (setq notdeft-compread-file-function 'notdeft-ido-compread-file)
   ;; Do minibuffer note selection by search and then Ivy choice list.
   (require 'notdeft-ivy)
   (add-to-list 'ivy-re-builders-alist

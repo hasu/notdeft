@@ -276,13 +276,14 @@ implementation.")
 Should be used by `notdeft-compread-file-function' as the history
 variable, if supported.")
 
-(defvar notdeft-compread-file-function #'notdeft-ido-compread-file
+(defvar notdeft-compread-file-function #'notdeft-default-compread-file
   "Function to use for note file selection.
 The function is used in the sense of `completing-read' to pick a
 file from a list. The function must take a list of file paths,
 and an optional prompt, in that order. It may require a
 selection, or it may return nil for non-selection. See
-`notdeft-ido-compread-file' for an example implementation.")
+`notdeft-default-compread-file' and `notdeft-ido-compread-file'
+for example implementations.")
 
 (defvar notdeft-load-hook nil
   "Hook run immediately after `notdeft' feature load.")
@@ -1890,12 +1891,11 @@ none was found."
       (notdeft-find-file fn))
     fn))
 
-(defun notdeft-ido-compread-file (files &optional prompt)
-  "Present a choice of FILES with `ido-completing-read'.
+(defun notdeft-default-compread-file (files &optional prompt)
+  "Present a choice of FILES with `completing-read'.
 Only present the non-directory component of each file. There may
 be duplicates of the same non-directory name. If non-nil, use the
 specified PROMPT. Return the path of the selected note file."
-  ;; Ido has been a part of Emacs since version 22.
   (let ((choices
 	 (mapcar
 	  (lambda (file)
@@ -1904,8 +1904,17 @@ specified PROMPT. Return the path of the selected note file."
     (let ((file
 	   (get-text-property
 	    0 'path
-	    (ido-completing-read (or prompt "File: ") choices nil t))))
+	    (completing-read (or prompt "File: ") choices nil t))))
       file)))
+
+(defun notdeft-ido-compread-file (files &optional prompt)
+  "Present a choice of FILES with `ido-completing-read'.
+Only present the non-directory component of each file. There may
+be duplicates of the same non-directory name. If non-nil, use the
+specified PROMPT. Return the path of the selected note file."
+  ;; Ido has been a part of Emacs since version 22.
+  (let ((completing-read-function #'ido-completing-read))
+    (notdeft-default-compread-file files prompt)))
 
 (defun notdeft-compread-file (files &optional prompt)
   "Present a choice of note FILES for selection.
