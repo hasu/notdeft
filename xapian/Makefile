@@ -9,7 +9,7 @@ default : build
 build : $(PROGRAM)
 
 $(PROGRAM) : notdeft-xapian.cc
-	$(CXX) -o $@ $< -std=c++11 $(CXXFLAGS) `pkg-config --cflags --libs tclap` `xapian-config --cxxflags --libs`
+	$(CXX) -o $@ -std=c++11 $(CXXFLAGS) $(shell pkg-config --cflags tclap) $(shell xapian-config --cxxflags) $< $(shell pkg-config --libs tclap) $(shell xapian-config --libs)
 
 clean :
 	-rm $(PROGRAM)
