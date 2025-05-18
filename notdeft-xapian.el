@@ -92,7 +92,7 @@ Not cleared between invocations of `notdeft-mode'.")
   "Read a Xapian query string, interactively.
 Use and update `notdeft-xapian-query-history' in querying.
 Optionally fill in the specified INITIAL input. Return the read
-string, or nil if no query is given."
+string, or nil if no non-blank query is given."
   (notdeft-read-query 'notdeft-xapian-query-history initial))
 
 (defun notdeft-xapian-index-dirs (dirs &optional recreate)

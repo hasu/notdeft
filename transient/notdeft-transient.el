@@ -175,40 +175,46 @@ Do that by showing a `message'."
   (notdeft-refresh)
   (message "Search index refreshed"))
 
+(defun notdeft-search-ensure-query (arguments)
+  "Add QUERY to ARGUMENTS if it is missing.
+Ask for a query interactively, but no more than once, leaving it
+out still not given."
+  (let ((query (plist-get arguments :query)))
+    (if query arguments
+      (let ((query (notdeft-xapian-read-query)))
+        (if query
+            (cons :query (cons query arguments))
+          arguments)))))
+
 (transient-define-suffix notdeft-search-select-find-file (&rest arguments)
   "Transient adapter for `notdeft-select-find-file'.
-Pass ARGUMENTS to it."
+Pass ARGUMENTS to it, and maybe any missing query."
   (interactive (notdeft-search-transient-to-plist-args))
-  (when (plist-get arguments :query)
-    (apply #'notdeft-select-find-file arguments)))
+  (apply #'notdeft-select-find-file (notdeft-search-ensure-query arguments)))
 
 (transient-define-suffix notdeft-search-ido-find-file (&rest arguments)
   "Transient adapter for `notdeft-xapian-ido-search-find-file'.
-Pass ARGUMENTS to it."
+Pass ARGUMENTS to it, and maybe any missing query."
   (interactive (notdeft-search-transient-to-plist-args))
-  (when (plist-get arguments :query)
-    (apply #'notdeft-xapian-ido-search-find-file arguments)))
+  (apply #'notdeft-xapian-ido-search-find-file (notdeft-search-ensure-query arguments)))
 
 (transient-define-suffix notdeft-search-lucky-find-file (&rest arguments)
   "Transient adapter for `notdeft-lucky-find-file'.
-Pass ARGUMENTS to it."
+Pass ARGUMENTS to it, and maybe any missing query."
   (interactive (notdeft-search-transient-to-plist-args))
-  (when (plist-get arguments :query)
-    (apply #'notdeft-lucky-find-file arguments)))
+  (apply #'notdeft-lucky-find-file (notdeft-search-ensure-query arguments)))
 
 (transient-define-suffix notdeft-search-open-query (&rest arguments)
   "Transient adapter for `notdeft-open-query'.
-Pass ARGUMENTS to it."
+Pass ARGUMENTS to it, and maybe any missing query."
   (interactive (notdeft-search-transient-to-plist-args))
-  (when (plist-get arguments :query)
-    (apply #'notdeft-open-query arguments)))
+  (apply #'notdeft-open-query (notdeft-search-ensure-query arguments)))
 
 (transient-define-suffix notdeft-search-notdeft-mode-open-query (&rest arguments)
   "Transient adapter for `notdeft-mode-open-query'.
-Pass ARGUMENTS to it."
+Pass ARGUMENTS to it, and maybe any missing query."
   (interactive (notdeft-search-transient-to-plist-args))
-  (when (plist-get arguments :query)
-    (apply #'notdeft-mode-open-query arguments)))
+  (apply #'notdeft-mode-open-query (notdeft-search-ensure-query arguments)))
 
 (defun notdeft-search-initial-value ()
   "Initialize transient from `notdeft-search-arguments'.

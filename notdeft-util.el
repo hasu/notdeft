@@ -32,7 +32,8 @@ trim any result string."
   "Read a query string, interactively.
 Read it from the minibuffer. Use and update history bound to the
 HIST symbol in querying. Optionally fill in the specified INITIAL
-input. Return the read string, or nil if no query is given."
+input. Return the read string, or nil if no non-blank query is
+given."
   (let* ((hist (if (not initial)
 		   hist
                  (let ((history-delete-duplicates t))
