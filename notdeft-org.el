@@ -74,6 +74,8 @@ Like `org-store-link', store the link into `org-stored-links'."
       (let* ((name (file-name-nondirectory old-file))
 	     (link (concat "deft:" name))
 	     (desc (notdeft-title-from-file-content old-file)))
+        ;; We don't avoid duplicates here, which may not be the usual
+        ;; behavior of Org (see `org-link--add-to-stored-links').
 	(push (list link desc) org-stored-links)
 	(message "Stored: %s" (or desc link))))))
 
@@ -205,15 +207,17 @@ present results in a RICH manner. This defines the opening of Org
   "Store the current NotDeft search as an Org link.
 Use `org-store-link' to invoke this function. If invoked in
 `notdeft-mode', then store a link to the current Xapian query, if
-any. In other modes return nil."
+any, and return the link text. In other modes return nil."
   (let* ((query (and (eq major-mode 'notdeft-mode)
                      (boundp 'notdeft-xapian-query)
                      (symbol-value 'notdeft-xapian-query)))
          (query (notdeft-chomp-nullify query)))
     (when query
-      (org-link-store-props
-       :type "notdeft"
-       :link (concat "notdeft:" query)))))
+      (let ((link (concat "notdeft:" query)))
+        (org-link-store-props
+         :type "notdeft"
+         :link link)
+        link))))
 
 ;;;###autoload
 (defun notdeft-org-insert-notdeft-link-from-history (&optional direct)
