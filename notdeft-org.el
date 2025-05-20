@@ -207,12 +207,13 @@ present results in a RICH manner. This defines the opening of Org
   (notdeft-open-query :query query :rich rich))
 
 ;;;###autoload
-(defun notdeft-org-store-notdeft-link ()
+(defun notdeft-org-store-notdeft-link (&optional interactive?)
   "Store the current NotDeft search as an Org link.
 Use `org-store-link' to invoke this function. If invoked in
-`notdeft-mode' without a selected note, then store a link to the
-current Xapian query, if any, and return the link text. In other
-cases and modes return nil."
+`notdeft-mode' without a selected note, then store a link to the current
+Xapian query, if any, and return the link text. In other cases and modes
+return nil. Ignore the INTERACTIVE? argument, which is accepted for
+`org-store-link-functions' compatibility."
   (when-let* (((and (fboundp 'notdeft-filename-at-point)
                     (eq major-mode 'notdeft-mode)
                     (not (funcall 'notdeft-filename-at-point))))
