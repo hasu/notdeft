@@ -14,6 +14,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'subr-x))
+
 (require 'org)
 (require 'notdeft)
 
@@ -206,18 +209,19 @@ present results in a RICH manner. This defines the opening of Org
 (defun notdeft-org-store-notdeft-link ()
   "Store the current NotDeft search as an Org link.
 Use `org-store-link' to invoke this function. If invoked in
-`notdeft-mode', then store a link to the current Xapian query, if
-any, and return the link text. In other modes return nil."
-  (let* ((query (and (eq major-mode 'notdeft-mode)
-                     (boundp 'notdeft-xapian-query)
-                     (symbol-value 'notdeft-xapian-query)))
-         (query (notdeft-chomp-nullify query)))
-    (when query
-      (let ((link (concat "notdeft:" query)))
-        (org-link-store-props
-         :type "notdeft"
-         :link link)
-        link))))
+`notdeft-mode' without a selected note, then store a link to the
+current Xapian query, if any, and return the link text. In other
+cases and modes return nil."
+  (when-let* (((and (fboundp 'notdeft-filename-at-point)
+                    (eq major-mode 'notdeft-mode)
+                    (not (funcall 'notdeft-filename-at-point))))
+              (query (symbol-value 'notdeft-xapian-query))
+              (query (notdeft-chomp-nullify query)))
+    (let ((link (concat "notdeft:" query)))
+      (org-link-store-props
+       :type "notdeft"
+       :link link)
+      link)))
 
 ;;;###autoload
 (defun notdeft-org-insert-notdeft-link-from-history (&optional direct)
