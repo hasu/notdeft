@@ -22,10 +22,12 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'subr-x))
+
 (require 'notdeft)
 (require 'notdeft-mode)
 (require 'seq)
-(require 'subr-x)
 (require 'transient)
 
 (defvar-local notdeft-search-arguments nil

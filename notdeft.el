@@ -209,11 +209,13 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'subr-x))
+
 (require 'cl-lib)
 (require 'notdeft-base)
 (require 'notdeft-util)
 (require 'notdeft-xapian)
-(require 'subr-x)
 
 ;;; Customization
 

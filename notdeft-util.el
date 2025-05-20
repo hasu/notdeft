@@ -9,7 +9,8 @@
 ;;; Commentary:
 ;; A small collection of utilities for internal use by NotDeft.
 
-(require 'subr-x)
+(eval-when-compile
+  (require 'subr-x))
 
 ;;; Code:
 
