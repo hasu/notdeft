@@ -68,9 +68,10 @@ QUERY should be a Xapian search query."
   (org-link-make-string (concat "notdeft:" query) desc))
 
 ;;;###autoload
-(defun notdeft-org-store-deft-link ()
+(defun notdeft-org-store-note-deft-link ()
   "Store a \"deft:\" link for the current note.
-Like `org-store-link', store the link into `org-stored-links'."
+Store it to the note, without any search string. Like
+`org-store-link', store the link into `org-stored-links'."
   (interactive)
   (let ((old-file (notdeft-current-filename t t)))
     (when old-file
@@ -86,7 +87,7 @@ Like `org-store-link', store the link into `org-stored-links'."
 (defun notdeft-org-save-deft-link-as-kill ()
   "Copy a \"deft:\" link for the current note.
 Add it to the front of the kill ring. Save only the link without
-the description, unlike with `notdeft-org-store-deft-link'."
+the description, unlike with `notdeft-org-store-note-deft-link'."
   (interactive)
   (let ((old-file (notdeft-current-filename t t)))
     (when old-file

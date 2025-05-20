@@ -28,7 +28,7 @@
     (define-key map [(l)] #'notdeft-org-link-existing-note) ;; l for link
     (define-key map [(n)] #'notdeft-org-link-new-file) ;; n for new
     (define-key map [(s)] #'org-store-link) ;; s for store
-    (define-key map [(S)] #'notdeft-org-store-deft-link) ;; s for store
+    (define-key map [(S)] #'notdeft-org-store-note-deft-link) ;; S for store
     (set-keymap-parent map 'notdeft-global-map)
     map)
   "Custom keymap for accessing NotDeft functionality.
@@ -41,7 +41,7 @@
 (add-hook 'notdeft-load-hook
   (lambda ()
     (define-key notdeft-mode-map (kbd "C-c S")
-      #'notdeft-org-store-deft-link)))
+      #'notdeft-org-store-note-deft-link)))
 
 (when (require 'hydra nil t)
   ;; Augment `notdeft-mode' bindings with a hydra.

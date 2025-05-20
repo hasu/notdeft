@@ -579,7 +579,7 @@ in your Org startup code, to set up support for “deft:” and “notdeft:” l
 
 Org mode's =org-store-link= command may be used to capture any Xapian search in a NotDeft buffer, to be later inserted with =org-insert-link=. The =notdeft-org= feature also defines NotDeft-specific =notdeft-org-link-existing-note= and =notdeft-org-link-new-file= commands for inserting “deft:” links, either to an existing note or a new one.
 
-The =notdeft-org= feature also defines a =notdeft-org-store-deft-link= command, which functions similarly to =org-store-link=, but stores a "deft:" link to the current note. In a NotDeft buffer, it stores a link to any selected note; and in a NotDeft note buffer, it stores a link to that buffer's note.
+The =notdeft-org= feature also defines a =notdeft-org-store-note-deft-link= command, which functions similarly to =org-store-link=, but stores a "deft:" link to the current note. In a NotDeft buffer, it stores a link to any selected note; and in a NotDeft note buffer, it stores a link to that buffer's note.
 
 NotDeft allows a "deft:" link to also include a search option, which follows the filename, separated by =::=. Search options are specified in the same way as for "file:" links. For example:
 : [[deft:notdeft-homepage.org::*Note Archival]]
