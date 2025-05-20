@@ -20,13 +20,15 @@
 ;; are avoiding requiring `notdeft-org' (and `notdeft') here.
 (declare-function notdeft-org-open-deft-link "notdeft-org")
 (declare-function notdeft-org-complete-deft-link "notdeft-org")
+(declare-function notdeft-org-store-deft-link "notdeft-org")
 (declare-function notdeft-org-open-notdeft-link "notdeft-org")
 (declare-function notdeft-org-store-notdeft-link "notdeft-org")
 
 (org-link-set-parameters
  "deft"
  :follow #'notdeft-org-open-deft-link
- :complete #'notdeft-org-complete-deft-link)
+ :complete #'notdeft-org-complete-deft-link
+ :store #'notdeft-org-store-deft-link)
 
 (org-link-set-parameters
  "notdeft"

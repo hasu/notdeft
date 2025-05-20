@@ -96,6 +96,54 @@ the description, unlike with `notdeft-org-store-note-deft-link'."
         (kill-new link)
 	(message "Copied: %s" link)))))
 
+;; Exists only in some installations, so do not `check-declare'.
+(declare-function org-link-precise-link-target nil)
+
+;;;###autoload
+(defun notdeft-org-store-deft-link (&optional interactive?)
+  "Store the current note location as a \"deft:\" link.
+Use `org-store-link' to invoke this function. If invoked in
+`notdeft-mode', then store a link to the selected note, if any. If the
+function `org-link-precise-link-target' is undefined (as it is in older
+versions of Org), then always return nil if in a note buffer. Otherwise
+return a link to the note and any target within it as a \"deft:\" link.
+Ignore the INTERACTIVE? argument, which is accepted for
+`org-store-link-functions' compatibility."
+  (ignore interactive?)
+  (if (eq major-mode 'notdeft-mode)
+      (when-let* ((old-file (notdeft-current-filename t)))
+        (let* ((name (file-name-nondirectory old-file))
+	       (link (concat "deft:" name))
+	       (desc (notdeft-title-from-file-content old-file)))
+          (org-link-store-props
+           :type "deft"
+           :link link
+           :description desc)
+          link))
+    (when-let* (((or (not org-link-context-for-files)
+                     (fboundp 'org-link-precise-link-target)))
+                (old-file (notdeft-current-filename t)))
+      (let* ((name (file-name-nondirectory old-file))
+             (target ;; (SEARCH-STRING DESC POSITION)
+              (and org-link-context-for-files
+                   (funcall 'org-link-precise-link-target)))
+	     (link (concat "deft:" name))
+             desc)
+        (if target
+            (pcase-exhaustive target
+              (`(,search-string ,search-desc ,_position)
+               (when search-string
+                 (setq link (concat link "::" search-string)))
+               (when search-desc
+                 (setq desc search-desc))))
+          (when-let* ((title (notdeft-title-from-file-content old-file)))
+            (setq desc title)))
+        (org-link-store-props
+         :type "deft"
+         :link link
+         :description desc)
+        link))))
+
 ;;;###autoload
 (defun notdeft-org-link-existing-note (notename &optional description region)
   "Create a \"deft:\" link to an existing note.
@@ -214,6 +262,7 @@ Use `org-store-link' to invoke this function. If invoked in
 Xapian query, if any, and return the link text. In other cases and modes
 return nil. Ignore the INTERACTIVE? argument, which is accepted for
 `org-store-link-functions' compatibility."
+  (ignore interactive?)
   (when-let* (((and (fboundp 'notdeft-filename-at-point)
                     (eq major-mode 'notdeft-mode)
                     (not (funcall 'notdeft-filename-at-point))))
