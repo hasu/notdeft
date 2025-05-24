@@ -1,7 +1,9 @@
 ;;; notdeft-xapian-make.el --- Xapian backend auto-installer  -*- lexical-binding: t; -*-
 
 ;; Author: MaxSt <max@stoerchle.at>
-;; Author: Tero Hasu <tero@hasu.is>
+;;   Tero Hasu <tero@hasu.is>
+;; Maintainer: Tero Hasu <tero@hasu.is>
+;; SPDX-License-Identifier: GPL-3.0-or-later AND BSD-3-Clause
 ;; See end of file for licensing information.
 
 ;;; Commentary:

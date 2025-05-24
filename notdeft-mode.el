@@ -1,8 +1,9 @@
 ;;; notdeft-mode.el --- A Deft-style major mode for viewing search results  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
-;;	Jason R. Blevins <jrblevin@sdf.org>
+;;   Jason R. Blevins <jrblevin@sdf.org>
 ;; Maintainer: Tero Hasu <tero@hasu.is>
+;; SPDX-License-Identifier: GPL-3.0-or-later AND BSD-3-Clause
 ;; See end of file for licensing information.
 
 ;;; Commentary:

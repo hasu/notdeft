@@ -1,10 +1,11 @@
 ;;; notdeft.el --- Note manager and search engine  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
-;;	Jason R. Blevins <jrblevin@sdf.org>
+;;   Jason R. Blevins <jrblevin@sdf.org>
 ;; Maintainer: Tero Hasu <tero@hasu.is>
 ;; Homepage: https://tero.hasu.is/notdeft/
 ;; Keywords: files text notes search
+;; SPDX-License-Identifier: GPL-3.0-or-later AND BSD-3-Clause
 ;; Package-Requires: ((emacs "28.1") (org "9.3"))
 
 ;; This file is not part of GNU Emacs.

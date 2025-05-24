@@ -3,6 +3,7 @@
 ;; Copyright (C) 2025 by the authors.
 ;; All rights reserved.
 ;; Author: DarkBuffalo <db@gnu.re>
+;; SPDX-License-Identifier: BSD-3-Clause
 ;; Package-Requires: (notdeft transient)
 ;; See end of file for licensing information.
 

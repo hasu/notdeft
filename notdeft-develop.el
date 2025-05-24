@@ -1,6 +1,7 @@
 ;;; notdeft-develop.el --- Utilities for NotDeft development  -*- lexical-binding: t; -*-
 
 ;; Author: Tero Hasu <tero@hasu.is>
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; See end of file for licensing information.
 
 ;;; Commentary:

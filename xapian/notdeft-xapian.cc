@@ -881,7 +881,10 @@ int main(int argc, const char* argv[])
 
 /*
 
-  Copyright (C) 2017 Tero Hasu
+  Author: Tero Hasu <tero@hasu.is>
+  SPDX-License-Identifier: GPL-2.0-or-later
+
+  Copyright (C) 2017-2025 Tero Hasu
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as

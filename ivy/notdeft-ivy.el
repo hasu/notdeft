@@ -2,6 +2,7 @@
 
 ;; Author: Tero Hasu <tero@hasu.is>
 ;; Package-Requires: (ivy)
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; See end of file for licensing information.
 
 ;;; Commentary:

@@ -2,6 +2,7 @@
 
 ;; Author: Tero Hasu <tero@hasu.is>
 ;; Package-Requires: (notdeft seq (transient "0.5.0"))
+;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; See end of file for licensing information.
 
 ;;; Commentary:
