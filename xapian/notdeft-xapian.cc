@@ -900,6 +900,6 @@ int main(int argc, const char* argv[])
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-  See the file GPL-2 for the full text of the GNU GPL.
+  See the file LICENSE-GPLv2.txt for the full text of the GNU GPL.
 
   */
