@@ -242,10 +242,6 @@ the new note."
       (apply #'delete-region region))
     (insert (notdeft-make-deft-link name desc))))
 
-(defalias 'notdeft-link-new-file
-  #'notdeft-org-link-new-file
-  "Deprecated. Use `notdeft-org-link-new-file'.")
-
 ;;;###autoload
 (defun notdeft-org-open-notdeft-link (query &optional rich)
   "Open the NotDeft search specified by QUERY.

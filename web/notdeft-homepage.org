@@ -608,7 +608,7 @@ A benefit of that “deft:” link semantics is that using the command
 to move a note file into a different directory does not cause any “deft:” link to break, whereas regular “file:” links may break.
 
 To conveniently create a dedicated note for a given topic in an Org-mode buffer, and also link to that note at the same time, highlight the title (and link description) of that topic so that it becomes the active region, and then issue the command
-: M-x notdeft-link-new-file
+: M-x notdeft-org-link-new-file
 For example, if you've highlighted the text “desktop wikis”, the command will offer to create a note of the same title, derive a filename for it based on the title, and replace the region with a “deft:” link to it. (The command is defined by the =notdeft-org= feature.)
 
 * Quick Note Capture
