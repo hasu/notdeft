@@ -1902,13 +1902,11 @@ specified PROMPT. Return the path of the selected note file."
   (let ((choices
 	 (mapcar
 	  (lambda (file)
-	    (propertize (file-name-nondirectory file) 'path file))
+	    (cons (file-name-nondirectory file) file))
 	  files)))
-    (let ((file
-	   (get-text-property
-	    0 'path
-	    (completing-read (or prompt "File: ") choices nil t))))
-      file)))
+    (when-let* ((str (completing-read (or prompt "File: ") choices nil t))
+		(choice (assoc str choices)))
+      (cdr choice))))
 
 (defun notdeft-ido-compread-file (files &optional prompt)
   "Present a choice of FILES with `ido-completing-read'.
@@ -1916,8 +1914,14 @@ Only present the non-directory component of each file. There may
 be duplicates of the same non-directory name. If non-nil, use the
 specified PROMPT. Return the path of the selected note file."
   ;; Ido has been a part of Emacs since version 22.
-  (let ((completing-read-function #'ido-completing-read))
-    (notdeft-default-compread-file files prompt)))
+  (let ((choices
+	 (mapcar
+	  (lambda (file)
+	    (propertize (file-name-nondirectory file) 'path file))
+	  files)))
+    (when-let* ((str (ido-completing-read (or prompt "File: ") choices nil t))
+                (file (get-text-property 0 'path str)))
+      file)))
 
 (defun notdeft-compread-file (files &optional prompt)
   "Present a choice of note FILES for selection.
