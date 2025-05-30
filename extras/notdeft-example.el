@@ -37,16 +37,23 @@
 (fset 'my-notdeft-global-map my-notdeft-global-map)
 (global-set-key [f6] 'my-notdeft-global-map)
 
-;; Add Org-specific bindings that are also usable in a NotDeft buffer.
-(add-hook 'notdeft-load-hook
+(defvar notdeft-mode-load-hook nil
+  "Hook run immediately after `notdeft-mode' feature load.")
+
+(eval-after-load 'notdeft-mode
   (lambda ()
-    (define-key notdeft-mode-map (kbd "C-c S")
-      #'notdeft-org-store-note-deft-link)))
+    (run-hooks 'notdeft-mode-load-hook)))
+
+;; Add Org-specific bindings that are also usable in a NotDeft buffer.
+(add-hook 'notdeft-mode-load-hook
+          (lambda ()
+            (define-key notdeft-mode-map (kbd "C-c S")
+              #'notdeft-org-store-note-deft-link)))
 
 (when (require 'hydra nil t)
   ;; Augment `notdeft-mode' bindings with a hydra.
   (autoload 'notdeft-mode-hydra/body "notdeft-mode-hydra" nil t)
-  (add-hook 'notdeft-load-hook
+  (add-hook 'notdeft-mode-load-hook
     (lambda ()
       (define-key notdeft-mode-map (kbd "C-c h")
 	#'notdeft-mode-hydra/body)))
