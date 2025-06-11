@@ -20,6 +20,16 @@
 (require 'org)
 (require 'notdeft)
 
+(defcustom notdeft-org-store-link-as-deft nil
+  "Whether to store `org-store-link' of \"deft:\" links.
+May be set to the symbol `ask', affecting the INTERACTIVE? case.
+If this setting is set to nil then do not `org-store-link' such
+links at all, instead requiring calling
+`notdeft-org-store-deft-link' directly."
+  :type '(choice (const nil) (const ask) (const t))
+  :safe #'symbolp
+  :group 'notdeft)
+
 ;;;###autoload
 (defun notdeft-org-open-deft-link (link)
   "Visit the NotDeft note specified by LINK.
@@ -67,21 +77,90 @@ NAME should be a non-directory file name with extension."
 QUERY should be a Xapian search query."
   (org-link-make-string (concat "notdeft:" query) desc))
 
+(defun notdeft-org-link--store (directly &rest arguments)
+  "Add a link to ‘org-stored-links’.
+Add it either DIRECTLY, or just by storing properties with
+`org-link-store-props'. ARGUMENTS are as for
+`org-link-store-props'. In the DIRECTLY case do not avoid
+duplicates, which may not be the usual behavior of Org
+\(see `org-link--add-to-stored-links'). Return LINK text."
+  (let ((link (plist-get arguments :link)))
+    (if (not directly)
+        (apply #'org-link-store-props arguments)
+      (let ((desc (plist-get arguments :description)))
+        (push (list link desc) org-stored-links)
+        (message "Stored: %s" (or desc link))))
+    link))
+
+;; Exists only in some installations, so do not `check-declare'.
+(declare-function org-link-precise-link-target nil)
+
+;;;###autoload
+(defun notdeft-org-store-deft-link (&optional store-interactively directly no-target)
+  "Store the current note location as a \"deft:\" link.
+May be invoked directly, or via `org-store-link'.
+STORE-INTERACTIVELY is assumed to be non-nil if called
+interactively via `org-store-link' (see its INTERACTIVE?
+argument). If invoked in `notdeft-mode', then store a link to the
+selected note, if any. If invoked in a `notdeft-note-mode' file
+buffer, then store a link to the note and any target within it as
+a \"deft:\" link, but do that only conditionally, to allow for
+alternatively storing other kinds of links (like local or
+\"file:\" links): in the STORE-INTERACTIVELY case adhere to the
+`notdeft-org-store-link-as-deft' setting, or store without any
+confirmation in the DIRECTLY case, and in other cases do not
+store and return nil. If called with NO-TARGET or if the function
+`org-link-precise-link-target' is undefined (as it is in older
+versions of Org) then do not include any target part."
+  (interactive
+   (list nil t current-prefix-arg)
+   notdeft-mode notdeft-note-mode)
+  (if (eq major-mode 'notdeft-mode)
+      (when-let* ((old-file (notdeft-current-filename t (and directly t))))
+        (let* ((name (file-name-nondirectory old-file))
+	       (link (concat "deft:" name))
+	       (desc (notdeft-title-from-file-content old-file)))
+          (notdeft-org-link--store
+           directly
+           :type "deft"
+           :link link
+           :description desc)))
+    (when-let* ((old-file (notdeft-current-filename t))
+                ((or directly
+                     (eq notdeft-org-store-link-as-deft t)
+                     (and store-interactively
+                          (eq notdeft-org-store-link-as-deft 'ask)
+                          (y-or-n-p "Store as a deft: link? ")))))
+      (let* ((name (file-name-nondirectory old-file))
+             (target ;; (SEARCH-STRING DESC POSITION)
+              (and (not no-target)
+                   org-link-context-for-files
+                   (fboundp 'org-link-precise-link-target)
+                   (funcall 'org-link-precise-link-target)))
+	     (link (concat "deft:" name))
+             desc)
+        (if target
+            (pcase-exhaustive target
+              (`(,search-string ,search-desc ,_position)
+               (when search-string
+                 (setq link (concat link "::" search-string)))
+               (when search-desc
+                 (setq desc search-desc))))
+          (when-let* ((title (notdeft-title-from-file-content old-file)))
+            (setq desc title)))
+        (notdeft-org-link--store
+         directly
+         :type "deft"
+         :link link
+         :description desc)))))
+
 ;;;###autoload
 (defun notdeft-org-store-note-deft-link ()
   "Store a \"deft:\" link for the current note.
 Store it to the note, without any search string. Like
-`org-store-link', store the link into `org-stored-links'."
+`org-store-link', store the link in `org-stored-links'."
   (interactive)
-  (let ((old-file (notdeft-current-filename t t)))
-    (when old-file
-      (let* ((name (file-name-nondirectory old-file))
-	     (link (concat "deft:" name))
-	     (desc (notdeft-title-from-file-content old-file)))
-        ;; We don't avoid duplicates here, which may not be the usual
-        ;; behavior of Org (see `org-link--add-to-stored-links').
-	(push (list link desc) org-stored-links)
-	(message "Stored: %s" (or desc link))))))
+  (notdeft-org-store-deft-link nil t t))
 
 ;;;###autoload
 (defun notdeft-org-save-deft-link-as-kill ()
@@ -95,54 +174,6 @@ the description, unlike with `notdeft-org-store-note-deft-link'."
 	     (link (concat "deft:" name)))
         (kill-new link)
 	(message "Copied: %s" link)))))
-
-;; Exists only in some installations, so do not `check-declare'.
-(declare-function org-link-precise-link-target nil)
-
-;;;###autoload
-(defun notdeft-org-store-deft-link (&optional interactive?)
-  "Store the current note location as a \"deft:\" link.
-Use `org-store-link' to invoke this function. If invoked in
-`notdeft-mode', then store a link to the selected note, if any. If the
-function `org-link-precise-link-target' is undefined (as it is in older
-versions of Org), then always return nil if in a note buffer. Otherwise
-return a link to the note and any target within it as a \"deft:\" link.
-Ignore the INTERACTIVE? argument, which is accepted for
-`org-store-link-functions' compatibility."
-  (ignore interactive?)
-  (if (eq major-mode 'notdeft-mode)
-      (when-let* ((old-file (notdeft-current-filename t)))
-        (let* ((name (file-name-nondirectory old-file))
-	       (link (concat "deft:" name))
-	       (desc (notdeft-title-from-file-content old-file)))
-          (org-link-store-props
-           :type "deft"
-           :link link
-           :description desc)
-          link))
-    (when-let* (((or (not org-link-context-for-files)
-                     (fboundp 'org-link-precise-link-target)))
-                (old-file (notdeft-current-filename t)))
-      (let* ((name (file-name-nondirectory old-file))
-             (target ;; (SEARCH-STRING DESC POSITION)
-              (and org-link-context-for-files
-                   (funcall 'org-link-precise-link-target)))
-	     (link (concat "deft:" name))
-             desc)
-        (if target
-            (pcase-exhaustive target
-              (`(,search-string ,search-desc ,_position)
-               (when search-string
-                 (setq link (concat link "::" search-string)))
-               (when search-desc
-                 (setq desc search-desc))))
-          (when-let* ((title (notdeft-title-from-file-content old-file)))
-            (setq desc title)))
-        (org-link-store-props
-         :type "deft"
-         :link link
-         :description desc)
-        link))))
 
 ;;;###autoload
 (defun notdeft-org-link-existing-note (notename &optional description region)
