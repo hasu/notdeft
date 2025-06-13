@@ -128,8 +128,9 @@ versions of Org) then do not include any target part."
     (when-let* ((old-file (notdeft-current-filename t))
                 ((or directly
                      (eq notdeft-org-store-link-as-deft t)
-                     (and store-interactively
-                          (eq notdeft-org-store-link-as-deft 'ask)
+                     (and (or (eq notdeft-org-store-link-as-deft 'ask-always)
+                              (and store-interactively
+                                   (eq notdeft-org-store-link-as-deft 'ask)))
                           (y-or-n-p "Store as a deft: link? ")))))
       (let* ((name (file-name-nondirectory old-file))
              (target ;; (SEARCH-STRING DESC POSITION)
