@@ -333,24 +333,24 @@ representation used in `notdeft-dcache--cache'."
 Compute it if not yet done, or if REFRESH is true."
   (when (or (not notdeft-dcache--cache) refresh)
     (let* ((mdirs (mapcar #'notdeft-canonicalize-root notdeft-directories))
-	   (sfiles (mapcar (lambda (x)
-			     (let* ((sdir (notdeft-canonicalize-root (car x)))
-				    (files (mapcar
-					    (lambda (file)
-					      (expand-file-name file sdir))
-					    (cdr x))))
-			       (cons sdir files)))
-			   notdeft-sparse-directories))
-	   (sdirs (mapcar #'car sfiles))
-	   (adirs (append mdirs sdirs))
-	   (dirmap (append
-		    (mapcar (lambda (dir)
-			      (cons (notdeft-canonicalize-root dir) dir))
-			    notdeft-directories)
-		    (mapcar (lambda (dir)
-			      (let ((dir (car dir)))
-				(cons (notdeft-canonicalize-root dir) dir)))
-			    notdeft-sparse-directories))))
+	         (sfiles (mapcar (lambda (x)
+			                       (let* ((sdir (notdeft-canonicalize-root (car x)))
+				                            (files (mapcar
+					                                  (lambda (file)
+					                                    (expand-file-name file sdir))
+					                                  (cdr x))))
+			                         (cons sdir files)))
+			                     notdeft-sparse-directories))
+	         (sdirs (mapcar #'car sfiles))
+	         (adirs (append mdirs sdirs))
+	         (dirmap (append
+		                (mapcar (lambda (dir)
+			                        (cons (notdeft-canonicalize-root dir) dir))
+			                      notdeft-directories)
+		                (mapcar (lambda (dir)
+			                        (let ((dir (car dir)))
+				                        (cons (notdeft-canonicalize-root dir) dir)))
+			                      notdeft-sparse-directories))))
       (setq notdeft-dcache--cache (vector mdirs sdirs adirs sfiles dirmap))))
   notdeft-dcache--cache)
 
@@ -361,7 +361,7 @@ directory path in any form, return the form that it has in either
 `notdeft-directories' or `notdeft-sparse-directories', or nil if
 it does not."
   (cdr (assoc (notdeft-canonicalize-root root)
-	      (aref cache 4))))
+	            (aref cache 4))))
 
 (defun notdeft-dcache--roots (cache)
   "Return all NotDeft roots in the CACHE.
@@ -376,11 +376,11 @@ that are not NotDeft root directories. Return a filtered list
 of directory paths in canonical form."
   (let ((roots (aref cache 2)))
     (delete nil
-	    (mapcar (lambda (dir)
-		      (let ((dir (notdeft-canonicalize-root dir)))
-			(when (member dir roots)
-			  dir)))
-		    dirs))))
+	          (mapcar (lambda (dir)
+		                  (let ((dir (notdeft-canonicalize-root dir)))
+			                  (when (member dir roots)
+			                    dir)))
+		                dirs))))
 
 (defun notdeft-dcache--expand-sparse-root (dir cache)
   "Expand NotDeft root path DIR.
@@ -388,7 +388,7 @@ Use information in CACHE. Expand the DIR path into a
 specification for the sparse directory. Return nil if it is not a
 sparse root."
   (assoc (notdeft-canonicalize-root dir)
-	 (aref cache 3)))
+	       (aref cache 3)))
 
 (defun notdeft-dcache--sparse-file-root (file cache)
   "Resolve sparse FILE root directory.
@@ -400,7 +400,7 @@ canonical form. Use CACHE information for resolution."
     (cl-some
      (lambda (sdir-files)
        (when (member file (cdr sdir-files))
-	 (car sdir-files)))
+	       (car sdir-files)))
      sdirs-files)))
 
 (defun notdeft-dcache--managed-file-root (file cache)
@@ -418,7 +418,7 @@ than the root itself, and that may also be done separately."
     (cl-some
      (lambda (dir)
        (when (string-prefix-p dir file)
-	 dir))
+	       dir))
      mdirs)))
 
 (defun notdeft-dcache--strict-managed-file-root (file cache)
@@ -428,7 +428,7 @@ Otherwise return the root. Assume FILE to be in an absolute,
 canonical form. Use CACHE information for resolution."
   (let ((root (notdeft-dcache--managed-file-root file cache)))
     (when (and root
-	       (not (string= root (file-name-as-directory file))))
+	             (not (string= root (file-name-as-directory file))))
       root)))
 
 (defun notdeft-dcache--managed-file-subdir (file cache)
@@ -442,9 +442,9 @@ resolution."
   (let ((root (notdeft-dcache--strict-managed-file-root file cache)))
     (when root
       (let ((dir (file-name-as-directory
-		  (file-name-directory file))))
-	(unless (string= root dir)
-	  dir)))))
+		              (file-name-directory file))))
+	      (unless (string= root dir)
+	        dir)))))
 
 (defun notdeft-dcache--file-root (file cache)
   "Resolve note FILE root, syntactically.
@@ -465,11 +465,11 @@ any extension. Use CACHE information for resolution."
     (cl-some
      (lambda (sdir-files)
        (let ((files (cdr sdir-files)))
-	 (cl-some
-	  (lambda (file)
-	    (when (string= name (file-name-nondirectory file))
-	      file))
-	  files)))
+	       (cl-some
+	        (lambda (file)
+	          (when (string= name (file-name-nondirectory file))
+	            file))
+	        files)))
      sdirs-files)))
 
 ;;; `notdeft-mode' status predicates
@@ -485,7 +485,7 @@ Return the buffer, or nil."
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
       (when (eq major-mode 'notdeft-mode)
-	buffer))))
+	      buffer))))
 
 ;;; File processing
 
@@ -520,8 +520,8 @@ with a current time string, as formatted with
 `notdeft-format-time-for-filename'. This is the NotDeft detault
 naming for notes that are created without a title."
   (let* ((ctime (current-time))
-	 (ctime-s (notdeft-format-time-for-filename ctime))
-	 (base-filename (format "Deft--%s" ctime-s)))
+	       (ctime-s (notdeft-format-time-for-filename ctime))
+	       (base-filename (format "Deft--%s" ctime-s)))
     base-filename))
 
 (defun notdeft-make-filename (notename &optional ext dir in-subdir)
@@ -533,8 +533,8 @@ except that IN-SUBDIR indicates that the file should be given its
 own subdirectory."
   (let ((root (or dir (notdeft-get-directory))))
     (concat (file-name-as-directory root)
-	    (if in-subdir (file-name-as-directory notename) "")
-	    notename "." (or ext notdeft-extension))))
+	          (if in-subdir (file-name-as-directory notename) "")
+	          notename "." (or ext notdeft-extension))))
 
 (defun notdeft-generate-filename (&optional ext dir)
   "Generate a new unique filename.
@@ -544,9 +544,9 @@ directory DIR (their defaults are as for
 `notdeft-make-filename')."
   (let (filename)
     (while (or (not filename)
-	       (file-exists-p filename))
+	             (file-exists-p filename))
       (let ((base-filename (notdeft-generate-notename)))
-	(setq filename (notdeft-make-filename base-filename ext dir))))
+	      (setq filename (notdeft-make-filename base-filename ext dir))))
     filename))
 
 (defun notdeft-new-file-data (dir notename ext data title)
@@ -559,19 +559,19 @@ Use NOTENAME as specified, or derive it from any TITLE with
 use the current date and time to derive a name for a note,
 attempting to construct a unique name."
   (let* ((notename (or notename
-		       (when title
-			 (notdeft-title-to-notename title))))
-	 (file (if notename
-		   (notdeft-make-filename notename ext dir)
-		 (notdeft-generate-filename ext dir))))
+		                   (when title
+			                   (notdeft-title-to-notename title))))
+	       (file (if notename
+		               (notdeft-make-filename notename ext dir)
+		             (notdeft-generate-filename ext dir))))
     (cons file (or data title))))
 
 (defun notdeft-make-file-re ()
   "Return a regexp matching strings with a NotDeft extension."
   (let ((exts (cons notdeft-extension notdeft-secondary-extensions)))
     (concat "\\.\\(?:"
-	    (mapconcat #'regexp-quote exts "\\|")
-	    "\\)$")))
+	          (mapconcat #'regexp-quote exts "\\|")
+	          "\\)$")))
 
 (defun notdeft-strip-extension (file)
   "Strip any NotDeft filename extension from FILE."
@@ -582,7 +582,7 @@ attempting to construct a unique name."
 Use `file-name-directory' to get the directory component.
 Strip any extension with `notdeft-strip-extension'."
   (let* ((file (file-name-nondirectory file))
-	 (file (notdeft-strip-extension file)))
+	       (file (notdeft-strip-extension file)))
     file))
 
 (defun notdeft-file-equal-p (x y)
@@ -591,7 +591,7 @@ Compare based on path names only, without consulting the
 filesystem, unlike `file-equal-p'. Disregard directory syntax, so
 that \"x\" is equal to \"x/\"."
   (string= (file-name-as-directory (expand-file-name x))
-	   (file-name-as-directory (expand-file-name y))))
+	         (file-name-as-directory (expand-file-name y))))
 
 (defun notdeft-file-in-directory-p (file dir)
   "Whether FILE is in DIR, syntactically.
@@ -599,7 +599,7 @@ A directory is considered to be in itself.
 Compare based on path names only, without consulting the
 filesystem, unlike `file-in-directory-p'."
   (let ((dir (file-name-as-directory (expand-file-name dir)))
-	(file (file-name-as-directory (expand-file-name file))))
+	      (file (file-name-as-directory (expand-file-name file))))
     (string-prefix-p dir file)))
 
 (defun notdeft-file-strictly-in-directory-p (file dir)
@@ -607,18 +607,18 @@ filesystem, unlike `file-in-directory-p'."
 Like `notdeft-file-in-directory-p', but a directory is not
 considered to be in itself."
   (let ((dir (file-name-as-directory (expand-file-name dir)))
-	(file (file-name-as-directory (expand-file-name file))))
+	      (file (file-name-as-directory (expand-file-name file))))
     (and (string-prefix-p dir file)
-	 (not (string= dir file)))))
+	       (not (string= dir file)))))
 
 (defun notdeft-file-member (file list)
   "Whether FILE is a member of LIST.
 Comparisons are syntactic only.
 Return the matching member of the list, or nil."
   (cl-some (lambda (elem)
-	     (when (notdeft-file-equal-p file elem)
-	       elem))
-	   list))
+	           (when (notdeft-file-equal-p file elem)
+	             elem))
+	         list))
 
 (defun notdeft-dir-of-file (file)
   "Return the NotDeft directory for FILE, or nil.
@@ -657,7 +657,7 @@ predicate to hold, nor does the containing NotDeft directory."
 Return nil on failure."
   (when (notdeft-file-readable-p file)
     (let* ((contents (notdeft-read-file file))
-	   (title (notdeft-parse-title contents)))
+	         (title (notdeft-parse-title contents)))
       title)))
 
 (defvar notdeft-directory-files-regexp "^[^._#/][^/]*$"
@@ -678,17 +678,17 @@ found."
    (file-readable-p root)
    (file-directory-p root)
    (let ((root (file-name-as-directory root))
-	 (files (directory-files root nil
-				 notdeft-directory-files-regexp t))
-	 result)
+	       (files (directory-files root nil
+				                         notdeft-directory-files-regexp t))
+	       result)
      (while (and files (not result))
        (let* ((abs-file (concat root (car files))))
-	 (setq files (cdr files))
-	 (cond
-	  ((file-directory-p abs-file)
-	   (setq result (notdeft-root-find-file file-p abs-file)))
-	  ((funcall file-p abs-file)
-	   (setq result abs-file)))))
+	       (setq files (cdr files))
+	       (cond
+	        ((file-directory-p abs-file)
+	         (setq result (notdeft-root-find-file file-p abs-file)))
+	        ((funcall file-p abs-file)
+	         (setq result abs-file)))))
      result)))
 
 (defun notdeft-file-by-basename (name)
@@ -704,13 +704,13 @@ return nil."
 (defun notdeft-managed-file-by-basename (name)
   "Resolve managed note file by basename NAME."
   (let* ((file-p (lambda (pn)
-		   (string= name (file-name-nondirectory pn))))
-	 (cand-roots notdeft-directories)
-	 result)
+		               (string= name (file-name-nondirectory pn))))
+	       (cand-roots notdeft-directories)
+	       result)
     (while (and cand-roots (not result))
       (let ((abs-root (expand-file-name (car cand-roots))))
-	(setq cand-roots (cdr cand-roots))
-	(setq result (notdeft-root-find-file file-p abs-root))))
+	      (setq cand-roots (cdr cand-roots))
+	      (setq result (notdeft-root-find-file file-p abs-root))))
     result))
 
 (defun notdeft-glob (root &optional dir result file-re)
@@ -723,24 +723,24 @@ value. Only include files whose non-directory names match the
 regexp FILE-RE, defaulting to the result of
 `notdeft-make-file-re'. If ROOT does not exist, return nil."
   (let* ((root (file-name-as-directory (expand-file-name root)))
-	 (dir (file-name-as-directory (or dir ".")))
-	 (abs-dir (expand-file-name dir root)))
+	       (dir (file-name-as-directory (or dir ".")))
+	       (abs-dir (expand-file-name dir root)))
     (and
      (file-readable-p abs-dir)
      (file-directory-p abs-dir)
      (let* ((files (directory-files abs-dir nil
-				    notdeft-directory-files-regexp t))
-	    (file-re (or file-re (notdeft-make-file-re))))
+				                            notdeft-directory-files-regexp t))
+	          (file-re (or file-re (notdeft-make-file-re))))
        (dolist (file files result)
-	 (let* ((rel-file (file-relative-name
-			   (expand-file-name file abs-dir)
-			   root))
-		(abs-file (concat root rel-file)))
-	   (cond
-	    ((file-directory-p abs-file)
-	     (setq result (notdeft-glob root rel-file result file-re)))
-	    ((string-match-p file-re file)
-	     (setq result (cons rel-file result))))))))))
+	       (let* ((rel-file (file-relative-name
+			                     (expand-file-name file abs-dir)
+			                     root))
+		            (abs-file (concat root rel-file)))
+	         (cond
+	          ((file-directory-p abs-file)
+	           (setq result (notdeft-glob root rel-file result file-re)))
+	          ((string-match-p file-re file)
+	           (setq result (cons rel-file result))))))))))
 
 (defun notdeft-glob--absolute (root &optional dir result file-re)
   "Like `notdeft-glob', but return the results as absolute paths.
@@ -769,15 +769,15 @@ may contain duplicates."
   (let ((fn-lst '()))
     (dolist (dir notdeft-directories)
       (setq fn-lst
-	    (append fn-lst
-		    (notdeft-find-all-files-in-dir dir t))))
+	          (append fn-lst
+		                (notdeft-find-all-files-in-dir dir t))))
     (dolist (sdir-files notdeft-sparse-directories)
       (let ((dir (car sdir-files))
-	    (files (cdr sdir-files)))
-	(dolist (file files)
-	  (let ((file (expand-file-name file dir)))
-	    (when (file-exists-p file)
-	      (setq fn-lst (cons file fn-lst)))))))
+	          (files (cdr sdir-files)))
+	      (dolist (file files)
+	        (let ((file (expand-file-name file dir)))
+	          (when (file-exists-p file)
+	            (setq fn-lst (cons file fn-lst)))))))
     (when only-basenames
       (setq fn-lst (mapcar #'file-name-nondirectory fn-lst)))
     ;; `sort` may modify `fn-lst`
@@ -791,9 +791,9 @@ and may also be used to define the title.
 Returns nil if there is no non-empty, not-just-whitespace
 title in CONTENTS."
   (let* ((res (with-temp-buffer
-		(insert contents)
-		(notdeft-parse-buffer)))
-	 (title (car res)))
+		            (insert contents)
+		            (notdeft-parse-buffer)))
+	       (title (car res)))
     title))
 
 (defun notdeft-condense-whitespace (str)
@@ -810,49 +810,49 @@ undefined components."
   (let (title summary keywords dbg (end (point-max)))
     (save-match-data
       (save-excursion
-	(goto-char (point-min))
-	(while (and (< (point) end) (not (and title summary)))
-	  ;;(message "%S" (list (point) title summary))
-	  (cond
-	   ((looking-at "^\\(?:%\\|@;\\|<!--\\)?#\\+TITLE:[[:blank:]]*\\(.*\\)$") ;; Org title
-	    (setq dbg (cons `(TITLE . ,(match-string 1)) dbg))
-	    (setq title (match-string 1))
-	    (goto-char (match-end 0)))
-	   ((looking-at "^\\(?:%\\|@;\\|<!--\\)?#\\+\\(?:KEYWORDS\\|FILETAGS\\):[[:blank:]]*\\(.*\\)$")
-	    (setq dbg (cons `(KEYWORDS . ,(match-string 1)) dbg))
-	    (setq keywords (match-string 1))
-	    (goto-char (match-end 0)))
-	   ((looking-at "^\\(?:%\\|@;\\|<!--\\)?#.*$") ;; line comment
-	    (setq dbg (cons `(COMMENT . ,(match-string 0)) dbg))
-	    (goto-char (match-end 0)))
-	   ((and notdeft-allow-org-property-drawers
-		 (looking-at "^[ \t]*:PROPERTIES:[ \t]*\\(\n\\|$\\)"))
-	    (let ((drawer-beg (point)) done)
-	      (goto-char (match-end 0))
-	      (while (and (not done) (< (point) end))
-		(cond
-		 ((looking-at "^[ \t]*:END:.*$") ;; recognize loosely for error recovery
-		  (goto-char (match-end 0))
-		  (setq done t))
-		 ((looking-at "^[ \t]*:\\S-+:.*\\(\n\\|$\\)") ;; property line
-		  (goto-char (match-end 0)))
-		 (t ;; unclosed drawer
-		  (setq done t))))
-	      (setq dbg (cons
-			 `(DRAWER . ,(buffer-substring
-				      drawer-beg (point)))
-			 dbg))))
-	   ((looking-at "[[:graph:]].*$") ;; non-whitespace
-	    (setq dbg (cons `(REST . ,(match-string 0)) dbg))
-	    (unless title
-	      (setq title (match-string 0))
-	      (goto-char (match-end 0)))
-	    (setq summary (buffer-substring (point) end))
-	    (goto-char end))
-	   (t
-	    (let* ((b (point)) (e (1+ b)))
-	      (setq dbg (cons `(SKIP . ,(buffer-substring b e)) dbg))
-	      (goto-char e)))))))
+	      (goto-char (point-min))
+	      (while (and (< (point) end) (not (and title summary)))
+	        ;;(message "%S" (list (point) title summary))
+	        (cond
+	         ((looking-at "^\\(?:%\\|@;\\|<!--\\)?#\\+TITLE:[[:blank:]]*\\(.*\\)$") ;; Org title
+	          (setq dbg (cons `(TITLE . ,(match-string 1)) dbg))
+	          (setq title (match-string 1))
+	          (goto-char (match-end 0)))
+	         ((looking-at "^\\(?:%\\|@;\\|<!--\\)?#\\+\\(?:KEYWORDS\\|FILETAGS\\):[[:blank:]]*\\(.*\\)$")
+	          (setq dbg (cons `(KEYWORDS . ,(match-string 1)) dbg))
+	          (setq keywords (match-string 1))
+	          (goto-char (match-end 0)))
+	         ((looking-at "^\\(?:%\\|@;\\|<!--\\)?#.*$") ;; line comment
+	          (setq dbg (cons `(COMMENT . ,(match-string 0)) dbg))
+	          (goto-char (match-end 0)))
+	         ((and notdeft-allow-org-property-drawers
+		             (looking-at "^[ \t]*:PROPERTIES:[ \t]*\\(\n\\|$\\)"))
+	          (let ((drawer-beg (point)) done)
+	            (goto-char (match-end 0))
+	            (while (and (not done) (< (point) end))
+		            (cond
+		             ((looking-at "^[ \t]*:END:.*$") ;; recognize loosely for error recovery
+		              (goto-char (match-end 0))
+		              (setq done t))
+		             ((looking-at "^[ \t]*:\\S-+:.*\\(\n\\|$\\)") ;; property line
+		              (goto-char (match-end 0)))
+		             (t ;; unclosed drawer
+		              (setq done t))))
+	            (setq dbg (cons
+			                   `(DRAWER . ,(buffer-substring
+				                              drawer-beg (point)))
+			                   dbg))))
+	         ((looking-at "[[:graph:]].*$") ;; non-whitespace
+	          (setq dbg (cons `(REST . ,(match-string 0)) dbg))
+	          (unless title
+	            (setq title (match-string 0))
+	            (goto-char (match-end 0)))
+	          (setq summary (buffer-substring (point) end))
+	          (goto-char end))
+	         (t
+	          (let* ((b (point)) (e (1+ b)))
+	            (setq dbg (cons `(SKIP . ,(buffer-substring b e)) dbg))
+	            (goto-char e)))))))
     (list
      (notdeft-chomp-nullify title)
      (notdeft-chomp-nullify summary 'notdeft-condense-whitespace)
@@ -892,20 +892,20 @@ changes remain."
     (cl-case what
       (dirs
        (setq dirs (notdeft-dcache--filter-roots
-		   things (notdeft-dcache))))
+		               things (notdeft-dcache))))
       (files
        (dolist (file things)
-	 (let ((dir (notdeft-dir-of-file file)))
-	   (when dir
-	     (notdeft-setq-cons files file)
-	     (notdeft-setq-cons dirs dir)))))
+	       (let ((dir (notdeft-dir-of-file file)))
+	         (when dir
+	           (notdeft-setq-cons files file)
+	           (notdeft-setq-cons dirs dir)))))
       (anything
        (setq dirs (notdeft-dcache--roots (notdeft-dcache)))))
     (if (or (and (eq what 'files) (not files))
-	    (and (eq what 'dirs) (not dirs)))
-	nil
+	          (and (eq what 'dirs) (not dirs)))
+	      nil
       (cons (cl-remove-duplicates dirs :test 'equal)
-	    files))))
+	          files))))
 
 (defun notdeft-expand-sparse-dirs (dirs)
   "Expand sparse directory names in DIRS.
@@ -914,15 +914,15 @@ DIR is canonical, and FILES are relative to DIR, or leave
 elements intact for DIRS that are not sparse directories."
   (let ((cache (notdeft-dcache)))
     (mapcar (lambda (dir)
-	      (let ((entry (notdeft-dcache--expand-sparse-root dir cache)))
-		(if (not entry)
-		    dir
-		  (let ((dir (car entry))
-			(files (cdr entry)))
-		    (cons dir (mapcar (lambda (file)
-					(file-relative-name file dir))
-				      files))))))
-	    dirs)))
+	            (let ((entry (notdeft-dcache--expand-sparse-root dir cache)))
+		            (if (not entry)
+		                dir
+		              (let ((dir (car entry))
+			                  (files (cdr entry)))
+		                (cons dir (mapcar (lambda (file)
+					                              (file-relative-name file dir))
+				                              files))))))
+	          dirs)))
 
 (defun notdeft-xapian-index-all-dirs (&optional recreate)
   "Refresh Xapian indexes for all configured directories.
@@ -956,9 +956,9 @@ function to be used instead for a partial index update. If
 REBUILD is non-nil, always rebuild the entire index."
   (when (or reindex rebuild notdeft-pending-reindex)
     (if (or rebuild notdeft-pending-reindex)
-	(progn
-	  (notdeft-xapian-index-all-dirs rebuild)
-	  (setq notdeft-pending-reindex nil))
+	      (progn
+	        (notdeft-xapian-index-all-dirs rebuild)
+	        (setq notdeft-pending-reindex nil))
       (funcall reindex))
     (run-hooks 'notdeft-after-index-change-hook))
   (run-hooks 'notdeft-after-fs-change-hook))
@@ -982,10 +982,10 @@ For further work call `notdeft-global-do-pending'."
   (let ((changes (notdeft-compute-changes what things)))
     (when changes
       (let ((dirs (car changes)))
-	;;(message "CHANGES: %S" dirs)
-	(notdeft-global-do-pending
-	 (lambda () (notdeft-xapian-index-dirs
-		     (notdeft-expand-sparse-dirs dirs))))))))
+	      ;;(message "CHANGES: %S" dirs)
+	      (notdeft-global-do-pending
+	       (lambda () (notdeft-xapian-index-dirs
+		                 (notdeft-expand-sparse-dirs dirs))))))))
 
 ;;; `notdeft-note-mode'
 
@@ -1028,7 +1028,7 @@ Use `current-buffer' as the default buffer."
   (let ((buf (get-file-buffer file)))
     (when buf
       (with-current-buffer buf
-	(notdeft-note-mode 1)))))
+	      (notdeft-note-mode 1)))))
 
 ;;;###autoload
 (defun notdeft-save-buffer (prefix)
@@ -1060,8 +1060,8 @@ The list of choices is determined by the function
       (switch-to-buffer (car buffers)))
      (t
       (let* ((names (mapcar #'buffer-name buffers))
-	     (name (ido-completing-read "Buffer: " names nil t)))
-	(switch-to-buffer name))))))
+	           (name (ido-completing-read "Buffer: " names nil t)))
+	      (switch-to-buffer name))))))
 
 ;;;###autoload
 (defun notdeft-find-file (file &optional other switch)
@@ -1100,40 +1100,40 @@ preferably any TITLE may be specified as its own argument. Use
 `notdeft-new-file-data-function' to derive a note file name and
 content for the note. Return the filename of the created file."
   (let* ((dir (pcase dir
-	       ((pred stringp)
-		dir)
-	       ((pred consp)
-		(notdeft-select-directory-from dir "Directory for new file: "))
-	       (`ask
-		(notdeft-select-directory "Directory for new file: "))
-	       (_
-		(notdeft-get-directory))))
-	 (ext (pcase ext
-	       ((pred stringp)
-		ext)
-	       (`ask
-		(notdeft-read-extension))
-	       (_
-		notdeft-extension)))
-	 (title (or title
-		    (pcase notename
-		      (`(title ,(and (pred stringp) str))
-		       str)
-		      (_ nil))))
-	 (notename (when (stringp notename)
-		     notename)))
+	              ((pred stringp)
+		             dir)
+	              ((pred consp)
+		             (notdeft-select-directory-from dir "Directory for new file: "))
+	              (`ask
+		             (notdeft-select-directory "Directory for new file: "))
+	              (_
+		             (notdeft-get-directory))))
+	       (ext (pcase ext
+	              ((pred stringp)
+		             ext)
+	              (`ask
+		             (notdeft-read-extension))
+	              (_
+		             notdeft-extension)))
+	       (title (or title
+		                (pcase notename
+		                  (`(title ,(and (pred stringp) str))
+		                   str)
+		                  (_ nil))))
+	       (notename (when (stringp notename)
+		                 notename)))
     (pcase (funcall notdeft-new-file-data-function
-		    dir notename ext data title)
+		                dir notename ext data title)
       (`(,(and (pred stringp) file) .
-	 ,(and (pred string-or-null-p) data))
+	       ,(and (pred string-or-null-p) data))
        (notdeft-ensure-root file)
        (if (not data)
-	   (notdeft-find-file file)
-	 (write-region data nil file nil nil nil 'excl)
-	 (notdeft-changed--fs 'files (list file))
-	 (notdeft-find-file file)
-	 (with-current-buffer (get-file-buffer file)
-	   (goto-char (point-max))))
+	         (notdeft-find-file file)
+	       (write-region data nil file nil nil nil 'excl)
+	       (notdeft-changed--fs 'files (list file))
+	       (notdeft-find-file file)
+	       (with-current-buffer (get-file-buffer file)
+	         (goto-char (point-max))))
        file))))
 
 (defun notdeft-sub--new-file (&optional notename data title pfx)
@@ -1147,11 +1147,11 @@ for a filename extension; otherwise default to
 `notdeft-extension'. Return the name of the new file."
   (let ((pfx (prefix-numeric-value pfx)))
     (notdeft-create-file
-      (and (>= pfx 4) 'ask)
-      notename
-      (and (>= pfx 16) 'ask)
-      data
-      title)))
+     (and (>= pfx 4) 'ask)
+     notename
+     (and (>= pfx 16) 'ask)
+     data
+     title)))
 
 ;;;###autoload
 (defun notdeft-switch-to-file-named (title &optional data)
@@ -1169,12 +1169,12 @@ behave in a useful way.)"
     (unless notename
       (error "Aborting, unsuitable title: %S" title))
     (let* ((ext notdeft-extension)
-	   (basename (concat notename "." ext))
-	   (file (notdeft-file-by-basename basename)))
+	         (basename (concat notename "." ext))
+	         (file (notdeft-file-by-basename basename)))
       (if (not file)
-	  (notdeft-create-file nil notename ext data title)
-	(notdeft-find-file file)
-	file))))
+	        (notdeft-create-file nil notename ext data title)
+	      (notdeft-find-file file)
+	      file))))
 
 ;;;###autoload
 (defun notdeft-new-file-named (pfx title)
@@ -1204,7 +1204,7 @@ Return the buffer, or nil."
   (let ((buffer (or buffer (current-buffer))))
     (with-current-buffer buffer
       (when notdeft-note-mode
-	buffer))))
+	      buffer))))
 
 (defun notdeft-get-directory ()
   "Select a NotDeft directory for an operation.
@@ -1214,15 +1214,15 @@ Otherwise, use any previously selected `notdeft-directory'. All
 else failing, query using `notdeft-select-directory', and cache
 the result into `notdeft-directory'."
   (or (when (notdeft-note-buffer-p)
-	(cl-some
-	 (lambda (root)
-	   (when (file-in-directory-p default-directory root)
-	     root))
-	 notdeft-directories))
+	      (cl-some
+	       (lambda (root)
+	         (when (file-in-directory-p default-directory root)
+	           root))
+	       notdeft-directories))
       notdeft-directory
       (let ((dir (notdeft-select-directory)))
-	(setq notdeft-directory (file-name-as-directory dir))
-	dir)))
+	      (setq notdeft-directory (file-name-as-directory dir))
+	      dir)))
 
 (defun notdeft-fail (fail)
   "Translate FAIL into a failure function.
@@ -1298,42 +1298,42 @@ any deleted file, or nil if `delete-file' was not executed."
   (interactive
    (let ((prefix current-prefix-arg))
      (list (notdeft-current-filename nil t)
-	   (not (equal prefix '(16)))
-	   (equal prefix '(4))
-	   t)))
+	         (not (equal prefix '(16)))
+	         (equal prefix '(4))
+	         t)))
   (let ((old-file file))
     (cond
      ((not old-file)
       nil)
      ((notdeft-file-sparse-p old-file)
       (when interactively
-	(message "Cannot delete fixed-path file")))
+	      (message "Cannot delete fixed-path file")))
      (t
       (let ((actually-trash
-	     (and trash delete-by-moving-to-trash))
-	    (old-file-nd
-	     (file-name-nondirectory old-file)))
-	(when (or (not interactively)
-		  (y-or-n-p
-		   (concat (if actually-trash "Trash" "Delete")
-			   " file " old-file-nd "? ")))
-	  (prog1
-	      (when (file-exists-p old-file)
-		;; This may result in the file being trashed rather
-		;; than deleted, and we assume that any trashcan is
-		;; not one of the `notdeft-directories' (or under
-		;; them), which would be weird.
-		(delete-file old-file trash)
-		old-file)
-	    (notdeft-changed--fs 'files (list old-file))
-	    (when kill-buffer
-	      (let ((buf (get-file-buffer old-file)))
-		(when buf
-		  (kill-buffer buf))))
-	    (when interactively
-	      (message "%s %S"
-		       (if actually-trash "Trashed" "Deleted")
-		       old-file-nd)))))))))
+	           (and trash delete-by-moving-to-trash))
+	          (old-file-nd
+	           (file-name-nondirectory old-file)))
+	      (when (or (not interactively)
+		              (y-or-n-p
+		               (concat (if actually-trash "Trash" "Delete")
+			                     " file " old-file-nd "? ")))
+	        (prog1
+	            (when (file-exists-p old-file)
+		            ;; This may result in the file being trashed rather
+		            ;; than deleted, and we assume that any trashcan is
+		            ;; not one of the `notdeft-directories' (or under
+		            ;; them), which would be weird.
+		            (delete-file old-file trash)
+		            old-file)
+	          (notdeft-changed--fs 'files (list old-file))
+	          (when kill-buffer
+	            (let ((buf (get-file-buffer old-file)))
+		            (when buf
+		              (kill-buffer buf))))
+	          (when interactively
+	            (message "%s %S"
+		                   (if actually-trash "Trashed" "Deleted")
+		                   old-file-nd)))))))))
 
 ;;;###autoload
 (defun notdeft-move-into-subdir (old-file &optional force)
@@ -1349,13 +1349,13 @@ invoke with a non-nil FORCE argument."
     (message "Cannot move fixed-path file"))
    ((and (not force) (notdeft-file-in-subdir-p old-file))
     (message "Already in a NotDeft sub-directory (%S)"
-	     (file-name-directory old-file)))
+	           (file-name-directory old-file)))
    (t
     (let ((new-file
-	   (concat
-	    (file-name-directory old-file)
-	    (file-name-as-directory (notdeft-base-filename old-file))
-	    (file-name-nondirectory old-file))))
+	         (concat
+	          (file-name-directory old-file)
+	          (file-name-as-directory (notdeft-base-filename old-file))
+	          (file-name-nondirectory old-file))))
       (notdeft-rename-file+buffer old-file new-file nil t)
       (notdeft-changed--fs 'files (list old-file new-file))
       (message "Renamed as %S" new-file)))))
@@ -1376,13 +1376,13 @@ When called interactively use current note file, if any."
     (message "Cannot rename fixed-path file"))
    (t
     (let* ((old-ext (file-name-extension old-file))
-	   (new-ext (notdeft-read-extension old-ext)))
+	         (new-ext (notdeft-read-extension old-ext)))
       (unless (string= old-ext new-ext)
-	(let ((new-file
-	       (concat (file-name-sans-extension old-file) "." new-ext)))
-	  (notdeft-rename-file+buffer old-file new-file)
-	  (notdeft-changed--fs 'files (list old-file new-file))
-	  (message "Renamed as %S" new-file)))))))
+	      (let ((new-file
+	             (concat (file-name-sans-extension old-file) "." new-ext)))
+	        (notdeft-rename-file+buffer old-file new-file)
+	        (notdeft-changed--fs 'files (list old-file new-file))
+	        (message "Renamed as %S" new-file)))))))
 
 ;;;###autoload
 (defun notdeft-rename-file (old-file &optional derive)
@@ -1398,17 +1398,17 @@ with a \\[universal-argument] prefix argument."
     (if (notdeft-file-sparse-p old-file)
         (message "Cannot rename fixed-path file"))
     (let* ((old-name (notdeft-base-filename old-file))
-	   (def-name
-	     (or (when derive
-		   (let ((title
-			  (if (notdeft-buffer-p)
-			      (notdeft-title-from-file-content old-file)
-			    (notdeft-parse-title (buffer-string)))))
-		     (and title (notdeft-title-to-notename title))))
-		 old-name))
-	   (new-file (notdeft-sub--rename-file old-file old-name def-name)))
+	         (def-name
+	           (or (when derive
+		               (let ((title
+			                    (if (notdeft-buffer-p)
+			                        (notdeft-title-from-file-content old-file)
+			                      (notdeft-parse-title (buffer-string)))))
+		                 (and title (notdeft-title-to-notename title))))
+		             old-name))
+	         (new-file (notdeft-sub--rename-file old-file old-name def-name)))
       (when new-file
-	(message "Renamed as %S" new-file)))))
+	      (message "Renamed as %S" new-file)))))
 
 (defun notdeft-plist-get (plist property default)
   "From PLIST get PROPERTY value, or DEFAULT value."
@@ -1494,14 +1494,14 @@ requested, otherwise insist on non-blank input."
                     'notdeft-notename-history))
          (read (lambda ()
                  (notdeft-chomp-nullify
-	          (read-string
+	                (read-string
                    prompt ;; PROMPT
                    initial ;; INITIAL-INPUT
-	           (if initial
+	                 (if initial
                        (cons history 1)
                      history) ;; HISTORY
-	           nil ;; DEFAULT-VALUE
-	           t ;; INHERIT-INPUT-METHOD
+	                 nil ;; DEFAULT-VALUE
+	                 t ;; INHERIT-INPUT-METHOD
                    )))))
     (when initial
       (set history (cons initial (symbol-value history))))
@@ -1523,14 +1523,14 @@ return the new filename, and otherwise return nil."
           (notdeft-read-notename
            :prompt (concat "Rename " old-name " to (without extension): ")
            :initial def-name))
-	 (new-file
-	  (notdeft-make-filename new-name
-	    (file-name-extension old-file)
-	    (file-name-directory old-file))))
-  (unless (string= old-file new-file)
-    (notdeft-rename-file+buffer old-file new-file)
-    (notdeft-changed--fs 'files (list old-file new-file))
-    new-file)))
+	       (new-file
+	        (notdeft-make-filename new-name
+	                               (file-name-extension old-file)
+	                               (file-name-directory old-file))))
+    (unless (string= old-file new-file)
+      (notdeft-rename-file+buffer old-file new-file)
+      (notdeft-changed--fs 'files (list old-file new-file))
+      new-file)))
 
 (defun notdeft-rename-file+buffer (old-file new-file &optional exist-ok mkdir)
   "Like `rename-file', rename OLD-FILE as NEW-FILE.
@@ -1563,13 +1563,13 @@ to be the ones under NEW-DIR."
   (let ((old-dir (file-name-as-directory old-dir)))
     (dolist (buf (notdeft-note-buffer-list))
       (let ((old-file (buffer-file-name buf)))
-	(when (and old-file (string-prefix-p old-dir old-file))
-	  (let ((new-file (concat
-			   (file-name-as-directory new-dir)
-			   (substring old-file (length old-dir)))))
-	    (save-current-buffer
-	      (set-buffer buf)
-	      (set-visited-file-name new-file nil t))))))))
+	      (when (and old-file (string-prefix-p old-dir old-file))
+	        (let ((new-file (concat
+			                     (file-name-as-directory new-dir)
+			                     (substring old-file (length old-dir)))))
+	          (save-current-buffer
+	            (set-buffer buf)
+	            (set-visited-file-name new-file nil t))))))))
 
 (defun notdeft-sub--move-file (old-file dest-dir &optional whole-dir mkdir)
   "Move the OLD-FILE note file into the DEST-DIR directory.
@@ -1581,22 +1581,22 @@ only). Return the old pathname of the file or directory that was
 moved, or nil if nothing was moved."
   (let ((moving-sub (notdeft-file-in-subdir-p old-file)))
     (if (not moving-sub)
-	(let ((new-file (concat (file-name-as-directory dest-dir)
-				(file-name-nondirectory old-file))))
-	  (notdeft-rename-file+buffer old-file new-file nil mkdir)
-	  old-file)
+	      (let ((new-file (concat (file-name-as-directory dest-dir)
+				                        (file-name-nondirectory old-file))))
+	        (notdeft-rename-file+buffer old-file new-file nil mkdir)
+	        old-file)
       (unless whole-dir
-	(error "Attempt to move file in a sub-directory: %S" old-file))
+	      (error "Attempt to move file in a sub-directory: %S" old-file))
       (let ((old-dir (directory-file-name
-		      (file-name-directory old-file))))
-	(unless (and (eq whole-dir 'ask)
-		     (not (y-or-n-p
-			   (concat "Move entire directory "
-				   (file-name-nondirectory old-dir) "? "))))
-	  (let ((new-dir (concat (file-name-as-directory dest-dir)
-				 (file-name-nondirectory old-dir))))
-	    (notdeft-rename-directory+buffer old-dir new-dir mkdir)
-	    old-dir))))))
+		                  (file-name-directory old-file))))
+	      (unless (and (eq whole-dir 'ask)
+		                 (not (y-or-n-p
+			                     (concat "Move entire directory "
+				                           (file-name-nondirectory old-dir) "? "))))
+	        (let ((new-dir (concat (file-name-as-directory dest-dir)
+				                         (file-name-nondirectory old-dir))))
+	          (notdeft-rename-directory+buffer old-dir new-dir mkdir)
+	          old-dir))))))
 
 (defvar notdeft-previous-target nil
   "Previous file move or copy target NotDeft directory.
@@ -1624,36 +1624,36 @@ allowed."
     (message "Cannot move fixed-path file"))
    (t
     (let* ((old-root (notdeft-dir-of-file old-file))
-	   (choices ;; exclude any `old-root'
-	    (if (not old-root)
-		notdeft-directories
-	      (cl-remove-if (lambda (dir)
-			      (file-equal-p dir old-root))
-			    notdeft-directories)))
-	   (choices ;; default to any `notdeft-previous-target'
-	    (if (not notdeft-previous-target)
-		choices
-	      (notdeft-list-prefer
-	       choices
-	       (lambda (dir)
-		 (notdeft-file-equal-p dir notdeft-previous-target)))))
-	   (chosen-root
-	    (notdeft-select-directory-from choices nil t t))
-	   (new-root
-	    (notdeft-canonicalize-root chosen-root)))
+	         (choices ;; exclude any `old-root'
+	          (if (not old-root)
+		            notdeft-directories
+	            (cl-remove-if (lambda (dir)
+			                        (file-equal-p dir old-root))
+			                      notdeft-directories)))
+	         (choices ;; default to any `notdeft-previous-target'
+	          (if (not notdeft-previous-target)
+		            choices
+	            (notdeft-list-prefer
+	             choices
+	             (lambda (dir)
+		             (notdeft-file-equal-p dir notdeft-previous-target)))))
+	         (chosen-root
+	          (notdeft-select-directory-from choices nil t t))
+	         (new-root
+	          (notdeft-canonicalize-root chosen-root)))
       (if (and old-root
-	       (file-exists-p new-root)
-	       (file-equal-p old-root new-root))
-	  (message "File %S already under root %S" old-file chosen-root)
-	(notdeft-ensure-root new-root)
-	(let ((moved-file
-	       (notdeft-sub--move-file old-file new-root (or whole-dir 'ask) t)))
-	  (if (not moved-file)
-	      (message "Did not move %S" old-file)
-	    (setq notdeft-previous-target new-root)
-	    (notdeft-changed--fs
-	     'dirs (delete nil (list old-root new-root)))
-	    (message "Moved %S under root %S" moved-file chosen-root))))))))
+	             (file-exists-p new-root)
+	             (file-equal-p old-root new-root))
+	        (message "File %S already under root %S" old-file chosen-root)
+	      (notdeft-ensure-root new-root)
+	      (let ((moved-file
+	             (notdeft-sub--move-file old-file new-root (or whole-dir 'ask) t)))
+	        (if (not moved-file)
+	            (message "Did not move %S" old-file)
+	          (setq notdeft-previous-target new-root)
+	          (notdeft-changed--fs
+	           'dirs (delete nil (list old-root new-root)))
+	          (message "Moved %S under root %S" moved-file chosen-root))))))))
 
 ;;;###autoload
 (defun notdeft-import-buffer (&optional old-buf other-window)
@@ -1700,24 +1700,24 @@ prefix argument enables the OTHER-WINDOW option."
                       (concat read-name "." (notdeft-read-extension))))
                    (root-choices
                     (if (not notdeft-previous-target)
-		        notdeft-directories
-	              (notdeft-list-prefer
-	               notdeft-directories
-	               (lambda (dir)
-		         (notdeft-file-equal-p dir notdeft-previous-target)))))
-	           (chosen-root
-	            (notdeft-select-directory-from root-choices "Destination directory: " t t))
-	           (new-root
-	            (notdeft-canonicalize-root chosen-root))
+		                    notdeft-directories
+	                    (notdeft-list-prefer
+	                     notdeft-directories
+	                     (lambda (dir)
+		                     (notdeft-file-equal-p dir notdeft-previous-target)))))
+	                 (chosen-root
+	                  (notdeft-select-directory-from root-choices "Destination directory: " t t))
+	                 (new-root
+	                  (notdeft-canonicalize-root chosen-root))
                    (new-file (concat new-root new-name)))
-	      (notdeft-ensure-root new-root)
+	            (notdeft-ensure-root new-root)
               (with-current-buffer old-buf
-	        (write-region nil nil new-file nil nil nil 'excl))
-	      (setq notdeft-previous-target new-root)
-	      (notdeft-changed--fs 'files (list new-file))
+	              (write-region nil nil new-file nil nil nil 'excl))
+	            (setq notdeft-previous-target new-root)
+	            (notdeft-changed--fs 'files (list new-file))
               (prog1
-	          (notdeft-find-file new-file other-window other-window)
-	        (message "Imported %S under root %S" new-file chosen-root)))))))))
+	                (notdeft-find-file new-file other-window other-window)
+	              (message "Imported %S under root %S" new-file chosen-root)))))))))
 
 ;;;###autoload
 (defun notdeft-archive-file (old-file &optional whole-dir)
@@ -1734,17 +1734,17 @@ require interactive confirmation unless WHOLE-DIR is non-nil or a
     (if (notdeft-file-sparse-p old-file)
         (message "Cannot archive fixed-path file")
       (let ((old-root (notdeft-dir-of-file old-file)))
-	(if (not old-root)
-	    (message "Cannot archive non-Deft file")
-	  (let* ((new-dir
-		  (concat old-root
-			  (file-name-as-directory notdeft-archive-directory)))
-		 (moved-file
-		  (notdeft-sub--move-file old-file new-dir (or whole-dir 'ask) t)))
-	    (if (not moved-file)
-		(message "Did not archive %S" old-file)
-	      (notdeft-changed--fs 'dirs (list old-root))
-	      (message "Archived %S into %S" moved-file new-dir))))))))
+	      (if (not old-root)
+	          (message "Cannot archive non-Deft file")
+	        (let* ((new-dir
+		              (concat old-root
+			                    (file-name-as-directory notdeft-archive-directory)))
+		             (moved-file
+		              (notdeft-sub--move-file old-file new-dir (or whole-dir 'ask) t)))
+	          (if (not moved-file)
+		            (message "Did not archive %S" old-file)
+	            (notdeft-changed--fs 'dirs (list old-root))
+	            (message "Archived %S into %S" moved-file new-dir))))))))
 
 ;;;###autoload
 (defun notdeft-show-file-directory (file)
@@ -1754,8 +1754,8 @@ require interactive confirmation unless WHOLE-DIR is non-nil or a
   (when file
     (let ((dir (notdeft-dir-of-file file)))
       (if (not dir)
-	  (message "Not on a NotDeft file")
-	(message "%s" dir)))))
+	        (message "Not on a NotDeft file")
+	      (message "%s" dir)))))
 
 (defun notdeft-show-file-parse (file)
   "Show parse information for FILE.
@@ -1764,11 +1764,11 @@ When called interactively show it for the current note file."
    (list (notdeft-current-filename t t)))
   (when file
     (let ((res (with-temp-buffer
-	         (insert-file-contents file)
-	         (notdeft-parse-buffer))))
+	               (insert-file-contents file)
+	               (notdeft-parse-buffer))))
       (message "name=%S file=%S parse=%S"
-	       (file-name-nondirectory file)
-	       file res))))
+	             (file-name-nondirectory file)
+	             file res))))
 
 ;;;###autoload
 (defun notdeft-reindex ()
@@ -1809,17 +1809,17 @@ Always return FILE."
   (when notdeft-directories
     (let ((root (notdeft-dir-of-file file)))
       (when (and root (not (file-directory-p root)))
-	(when (file-exists-p root)
-	  (error "Data \"directory\" is a non-directory: %S" root))
-	(when (y-or-n-p (concat "Create directory " root "? "))
-	  (make-directory root t)))))
+	      (when (file-exists-p root)
+	        (error "Data \"directory\" is a non-directory: %S" root))
+	      (when (y-or-n-p (concat "Create directory " root "? "))
+	        (make-directory root t)))))
   file)
 
 (defun notdeft-drop-nth-cons (n lst)
   "Make list element at position N the first one of LST.
 That is, functionally move that element to position 0."
   (let* ((len (length lst))
-	 (rst (- len n)))
+	       (rst (- len n)))
     (cons (nth n lst) (append (butlast lst rst) (last lst (- rst 1))))))
 
 (defun notdeft-read-extension (&optional prefer)
@@ -1830,10 +1830,10 @@ With a PREFER argument, use that extension as the first choice."
   (if (not notdeft-secondary-extensions)
       notdeft-extension
     (let* ((choices (cons notdeft-extension notdeft-secondary-extensions))
-	   (choices (if prefer
-			(notdeft-list-prefer choices
-			  `(lambda (ext) (string= ,prefer ext)))
-		      choices)))
+	         (choices (if prefer
+			                  (notdeft-list-prefer choices
+			                                       `(lambda (ext) (string= ,prefer ext)))
+		                  choices)))
       (ido-completing-read "Extension: " choices nil t))))
 
 (defun notdeft-list-prefer (choices prefer)
@@ -1856,11 +1856,11 @@ The PROMPT, CONFIRM, and PRESERVE arguments are as for
    (t
     (when (and notdeft-directory (not preserve))
       (setq dirs (notdeft-list-prefer
-		  dirs
-		  (lambda (file)
-		    (notdeft-file-equal-p notdeft-directory file)))))
+		              dirs
+		              (lambda (file)
+		                (notdeft-file-equal-p notdeft-directory file)))))
     (ido-completing-read (or prompt "Data directory: ")
-			 dirs nil t))))
+			                   dirs nil t))))
 
 (defun notdeft-select-directory (&optional prompt confirm preserve)
   "Select a NotDeft directory, possibly interactively.
@@ -1872,7 +1872,7 @@ single choice. Present any `notdeft-directory' as the first
 choice, except with a true PRESERVE argument, which preserves
 DIRS order."
   (notdeft-select-directory-from notdeft-directories
-				 prompt confirm preserve))
+				                         prompt confirm preserve))
 
 ;;;###autoload
 (defun notdeft-chdir ()
@@ -1890,7 +1890,7 @@ not necessarily unique). Returns the resolved path, or nil if
 none was found."
   (let ((fn (notdeft-file-by-basename filename)))
     (if (not fn)
-	(message "No NotDeft note %S" filename)
+	      (message "No NotDeft note %S" filename)
       (notdeft-find-file fn))
     fn))
 
@@ -1900,12 +1900,12 @@ Only present the non-directory component of each file. There may
 be duplicates of the same non-directory name. If non-nil, use the
 specified PROMPT. Return the path of the selected note file."
   (let ((choices
-	 (mapcar
-	  (lambda (file)
-	    (cons (file-name-nondirectory file) file))
-	  files)))
+	       (mapcar
+	        (lambda (file)
+	          (cons (file-name-nondirectory file) file))
+	        files)))
     (when-let* ((str (completing-read (or prompt "File: ") choices nil t))
-		(choice (assoc str choices)))
+		            (choice (assoc str choices)))
       (cdr choice))))
 
 (defun notdeft-ido-compread-file (files &optional prompt)
@@ -1915,10 +1915,10 @@ be duplicates of the same non-directory name. If non-nil, use the
 specified PROMPT. Return the path of the selected note file."
   ;; Ido has been a part of Emacs since version 22.
   (let ((choices
-	 (mapcar
-	  (lambda (file)
-	    (propertize (file-name-nondirectory file) 'path file))
-	  files)))
+	       (mapcar
+	        (lambda (file)
+	          (propertize (file-name-nondirectory file) 'path file))
+	        files)))
     (when-let* ((str (ido-completing-read (or prompt "File: ") choices nil t))
                 (file (get-text-property 0 'path str)))
       file)))
@@ -1944,13 +1944,13 @@ file with `notdeft-find-file'."
     (let ((query (let ((query (plist-get arguments :query)))
                    (if (and query (not (plist-get arguments :edit)))
                        query
-	             (notdeft-xapian-read-query (or query (plist-get arguments :initial-query)))))))
+	                   (notdeft-xapian-read-query (or query (plist-get arguments :initial-query)))))))
       (when query
-	(let* ((notdeft-xapian-order-by (plist-get arguments :order-by))
+	      (let* ((notdeft-xapian-order-by (plist-get arguments :order-by))
                (notdeft-xapian-max-results
                 (or notdeft-select-file-max-choices notdeft-xapian-max-results))
                (files (notdeft-xapian-search-all-dirs query)))
-	  (when files
+	        (when files
             (let ((file (notdeft-compread-file files)))
               (prog1
                   file
@@ -2096,16 +2096,16 @@ highest-ranked one. Open the file directly, without switching to
 any `notdeft-buffer'."
   (interactive
    (let ((by-time (equal current-prefix-arg '(4)))
-	 (no-region (equal current-prefix-arg '(16))))
+	       (no-region (equal current-prefix-arg '(16))))
      (list :query (notdeft-xapian-read-query
                    (notdeft-string-from-region no-region))
            :order-by (and by-time 'time))))
   (let* ((query (plist-get arguments :query))
          (notdeft-xapian-order-by (plist-get arguments :order-by))
-	 (notdeft-xapian-max-results 1)
-	 (files (notdeft-xapian-search-all-dirs query)))
+	       (notdeft-xapian-max-results 1)
+	       (files (notdeft-xapian-search-all-dirs query)))
     (if (not files)
-	(message "No matching notes found")
+	      (message "No matching notes found")
       (let ((file (car files)))
         (notdeft-find-file file (plist-get arguments :other-window)
                            (plist-get arguments :switch-window))))))
@@ -2121,8 +2121,8 @@ returns no results if there is no `notdeft-xapian-program'."
 (defun notdeft-string-as-phrase-query (str)
   "Turn STR into a phrase query."
   (let* ((str (downcase str))
-	 (str (replace-regexp-in-string "\"" "" str))
-	 (str (concat "\"" str "\"")))
+	       (str (replace-regexp-in-string "\"" "" str))
+	       (str (concat "\"" str "\"")))
     str))
 
 ;;;###autoload
@@ -2137,7 +2137,7 @@ called with two such arguments."
    (let ((prefix (prefix-numeric-value current-prefix-arg)))
      (list (current-buffer)
            (= prefix 4)
-	   (>= prefix 16))))
+	         (>= prefix 16))))
   (when-let ((title (notdeft-buffer-title buffer nil t)))
     (notdeft-open-query :query (if as-phrase
                                    (notdeft-string-as-phrase-query title)
