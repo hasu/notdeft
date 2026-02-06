@@ -86,7 +86,7 @@
   "Format string for modification times in the NotDeft browser.
 Set to nil to hide."
   :type '(choice (string :tag "Time format")
-		 (const :tag "Hide" nil))
+		             (const :tag "Hide" nil))
   :safe #'string-or-null-p
   :group 'notdeft)
 
@@ -96,7 +96,7 @@ If a function, it must accept the filename and a maximum
 width (as for `string-width') as its two arguments. Set to nil to
 have no file information displayed."
   :type '(choice (function :tag "Formatting function")
-		 (const :tag "Hide" nil))
+		             (const :tag "Hide" nil))
   :safe #'null
   :group 'notdeft)
 
@@ -116,7 +116,7 @@ compaction happens after every query. Otherwise the value should
 be an integer specifying a limit for the cache size as a factor
 of the maximum result set size."
   :type '(choice (integer :tag "Times maximum")
-		 (const :tag "Unlimited" nil))
+		             (const :tag "Unlimited" nil))
   :safe (lambda (v) (or (not v) (numberp v)))
   :group 'notdeft)
 
@@ -231,7 +231,7 @@ this function."
   (cl-dolist (buf (buffer-list))
     (with-current-buffer buf
       (when (eq major-mode 'notdeft-mode)
-	(funcall function)))))
+	      (funcall function)))))
 
 (defun notdeft-cache-compact ()
   "Remove unused information from the file cache.
@@ -241,9 +241,9 @@ That is, remove information for files not currently in any
     (notdeft-buffers-mapc
      (lambda ()
        (cl-dolist (file notdeft-all-files)
-	 (let ((entry (gethash file notdeft-hash-entries)))
-	   (when entry
-	     (puthash file entry new-hash))))))
+	       (let ((entry (gethash file notdeft-hash-entries)))
+	         (when entry
+	           (puthash file entry new-hash))))))
     (setq notdeft-hash-entries new-hash)))
 
 (defun notdeft-cache-gc ()
@@ -254,26 +254,26 @@ search results including such files.) Return a list of the files
 whose information was removed."
   (let (lst)
     (maphash (lambda (file _v)
-	       (unless (file-exists-p file)
-		 (setq lst (cons file lst))))
-	     notdeft-hash-entries)
+	             (unless (file-exists-p file)
+		             (setq lst (cons file lst))))
+	           notdeft-hash-entries)
     (dolist (file lst lst)
       (notdeft-cache-remove-file file))))
 
 (defun notdeft-cache-newer-file (file mtime)
   "Update cached information for FILE with given MTIME."
   (let* ((res (with-temp-buffer
-		(insert-file-contents file)
-		(notdeft-parse-buffer)))
-	 (title (car res))
-	 (summary (cadr res))
-	 (contents
-	  (concat file " "
-		  (or title "") " "
-		  (or (car (cddr res)) "") " "
-		  (or summary ""))))
+		            (insert-file-contents file)
+		            (notdeft-parse-buffer)))
+	       (title (car res))
+	       (summary (cadr res))
+	       (contents
+	        (concat file " "
+		              (or title "") " "
+		              (or (car (cddr res)) "") " "
+		              (or summary ""))))
     (puthash file (list mtime contents title summary)
-	     notdeft-hash-entries)))
+	           notdeft-hash-entries)))
 
 (defun notdeft-cache-file (file)
   "Update file cache for FILE.
@@ -282,8 +282,8 @@ Keep any information for a non-existing file."
     (let ((mtime-cache (notdeft-file-mtime file))
           (mtime-file (nth 5 (file-attributes file))))
       (when (or (not mtime-cache)
-		(time-less-p mtime-cache mtime-file))
-	(notdeft-cache-newer-file file mtime-file)))))
+		            (time-less-p mtime-cache mtime-file))
+	      (notdeft-cache-newer-file file mtime-file)))))
 
 (defun notdeft-cache-update (files)
   "Update cached information for FILES."
@@ -325,7 +325,7 @@ information."
   (when notdeft-xapian-query
     (widget-insert
      (propertize (concat notdeft-xapian-query ": ")
-		 'face 'notdeft-xapian-query-face)))
+		             'face 'notdeft-xapian-query-face)))
   (when notdeft-filter-string
     (widget-insert
      (propertize notdeft-filter-string 'face 'notdeft-filter-string-face)))
@@ -345,13 +345,13 @@ information."
 
     ;; Print the files list
     (if (not (or notdeft-directories notdeft-sparse-directories))
-	"No NotDeft data directories.\n"
+	      "No NotDeft data directories.\n"
       (if notdeft-current-files
-	  (mapc #'notdeft-file-widget notdeft-current-files) ;; for side effects
-	(widget-insert
-	 (if notdeft-filter-string
-	     "No files match the current filter string.\n"
-	   "No files found.\n"))))
+	        (mapc #'notdeft-file-widget notdeft-current-files) ;; for side effects
+	      (widget-insert
+	       (if notdeft-filter-string
+	           "No files match the current filter string.\n"
+	         "No files found.\n"))))
 
     (widget-setup)
 
@@ -365,43 +365,51 @@ information."
 (defun notdeft-file-widget (file)
   "Add a line to the file browser for the given FILE."
   (let* ((entry (gethash file notdeft-hash-entries))
-	 (title (nth 2 entry))
-	 (summary (nth 3 entry))
-	 (mtime (when notdeft-time-format
-		  (format-time-string notdeft-time-format
-				      (car entry))))
-	 (line-width (- notdeft-buffer-width (notdeft-string-width mtime)))
-	 (path (when notdeft-file-display-function
-		 (funcall notdeft-file-display-function file line-width)))
-	 (path-width (notdeft-string-width path))
-	 (up-to-path-width (- line-width path-width))
-	 (title-width (min up-to-path-width
-			   (notdeft-string-width title)))
-	 (summary-width (min (notdeft-string-width summary)
-			     (- up-to-path-width
-				title-width
-				(length notdeft-separator)))))
+	       (title (nth 2 entry))
+	       (summary (nth 3 entry))
+	       (mtime (when notdeft-time-format
+		              (format-time-string notdeft-time-format
+				                              (car entry))))
+	       ;; Use length instead of string-width for simple strings
+	       (mtime-width (if mtime (length mtime) 0))
+	       (line-width (- notdeft-buffer-width mtime-width))
+	       (path (when notdeft-file-display-function
+		             (funcall notdeft-file-display-function file line-width)))
+	       (path-width (if path (length path) 0))
+	       (up-to-path-width (- line-width path-width))
+	       (title-str (or title ""))
+	       ;; For potentially multibyte title, truncate smartly
+	       (title-width (min up-to-path-width (length title-str)))
+	       (truncated-title (if title
+			                        (if (<= (length title-str) title-width)
+				                          title-str
+				                        (substring title-str 0 title-width))
+			                      "[Empty file]"))
+	       (summary-str (or summary ""))
+	       (sep-len (length notdeft-separator))
+	       (summary-width (max 0 (- up-to-path-width title-width sep-len)))
+	       (truncated-summary (if (<= (length summary-str) summary-width)
+				                        summary-str
+			                        (substring summary-str 0 summary-width))))
     (widget-create 'link
-		   :button-prefix ""
-		   :button-suffix ""
-		   :button-face 'notdeft-title-face
-		   :format "%[%v%]"
-		   :tag file
-		   :help-echo "Edit this file"
-		   :notify (lambda (widget &rest _ignore)
-			     (notdeft-find-file (widget-get widget :tag)))
-		   (if title
-		       (truncate-string-to-width title title-width)
-		     "[Empty file]"))
+		               :button-prefix ""
+		               :button-suffix ""
+		               :button-face 'notdeft-title-face
+		               :format "%[%v%]"
+		               :tag file
+		               :help-echo "Edit this file"
+		               :notify (lambda (widget &rest _ignore)
+			                       (notdeft-find-file (widget-get widget :tag)))
+		               truncated-title)
     (when (> summary-width 0)
       (widget-insert
        (propertize notdeft-separator 'face 'notdeft-separator-face))
       (widget-insert
-       (propertize (truncate-string-to-width summary summary-width)
-		   'face 'notdeft-summary-face)))
+       (propertize truncated-summary
+		               'face 'notdeft-summary-face)))
     (when (or path mtime)
       (while (< (current-column) up-to-path-width)
-	(widget-insert " ")))
+	      (widget-insert " ")))
     (when path
       (widget-insert (propertize path 'face 'notdeft-time-face)))
     (when mtime
@@ -417,9 +425,9 @@ name. If no note is selected FAIL as specified for
     (if (not (notdeft-buffer-p))
         (funcall fail (format "Not in a %s buffer" notdeft-buffer))
       (let ((file (widget-get (widget-at) :tag)))
-	(if (not file)
-	    (funcall fail "No NotDeft note selected")
-	  file)))))
+	      (if (not file)
+	          (funcall fail "No NotDeft note selected")
+	        file)))))
 
 ;; State updates
 
@@ -438,8 +446,8 @@ name. If no note is selected FAIL as specified for
   (cl-dolist (buf (buffer-list))
     (when (get-buffer-window buf 'visible)
       (with-current-buffer buf
-	(when (eq major-mode 'notdeft-mode)
-	  (cl-return buf))))))
+	      (when (eq major-mode 'notdeft-mode)
+	        (cl-return buf))))))
 
 (defmacro notdeft-with-each-buffer (&rest body)
   "Evaluate BODY with each NotDeft buffer set as current."
@@ -447,8 +455,8 @@ name. If no note is selected FAIL as specified for
   (let ((x (cl-gensym "buf")))
     `(dolist (,x (buffer-list))
        (with-current-buffer ,x
-	 (when (eq major-mode 'notdeft-mode)
-	   ,@body)))))
+	       (when (eq major-mode 'notdeft-mode)
+	         ,@body)))))
 
 (defun notdeft-set-all-files ()
   "Recompute `notdeft-all-files' for the current buffer.
@@ -496,13 +504,13 @@ any) that still remain pending after any performed operations."
   (when notdeft-pending-updates
     (when (get-buffer-window nil 'visible)
       (when (eq notdeft-pending-updates 'requery)
-	(notdeft-set-all-files)
-	(setq notdeft-pending-updates 'refilter))
+	      (notdeft-set-all-files)
+	      (setq notdeft-pending-updates 'refilter))
       (when (eq notdeft-pending-updates 'refilter)
-	(notdeft-filter-update)
-	(setq notdeft-pending-updates 'redraw))
+	      (notdeft-filter-update)
+	      (setq notdeft-pending-updates 'redraw))
       (when (eq notdeft-pending-updates 'redraw)
-	(notdeft-buffer-setup))
+	      (notdeft-buffer-setup))
       (setq notdeft-pending-updates nil))))
 
 (defun notdeft-reset (&optional all-buffers)
@@ -514,9 +522,9 @@ optionally for ALL-BUFFERS."
   (notdeft-cache-clear)
   (if all-buffers
       (notdeft-with-each-buffer
-	(setq notdeft-xapian-query nil)
-	(setq notdeft-filter-string nil)
-	(setq notdeft-pending-updates 'requery))
+	      (setq notdeft-xapian-query nil)
+	      (setq notdeft-filter-string nil)
+	      (setq notdeft-pending-updates 'requery))
     (when (notdeft-buffer-p)
       (setq notdeft-xapian-query nil)
       (setq notdeft-filter-string nil))
@@ -545,9 +553,9 @@ current `notdeft-mode' buffer."
   (when (and notdeft-xapian-program notdeft-cache-compaction-factor)
     (let ((count (hash-table-count notdeft-hash-entries)))
       (when (> count (* notdeft-cache-compaction-factor
-			notdeft-xapian-max-results))
-	(let ((remain (hash-table-count (notdeft-cache-compact))))
-	  (message "Cache compacted: size %d -> %d" count remain))))))
+			                  notdeft-xapian-max-results))
+	      (let ((remain (hash-table-count (notdeft-cache-compact))))
+	        (message "Cache compacted: size %d -> %d" count remain))))))
 
 (add-hook 'notdeft-after-fs-change-hook 'notdeft-mode-after-fs-change-hook)
 
@@ -571,19 +579,19 @@ summarizing some statistics about the results shown."
   (setq notdeft-xapian-query new-query)
   (notdeft-changed--query)
   (let* ((n (length notdeft-all-files))
-	 (is-none (= n 0))
-	 (is-max (and (> notdeft-xapian-max-results 0)
-		      (= n notdeft-xapian-max-results)))
-	 (found (cond
-		 (is-max (format "Found maximum of %d notes" n))
-		 (is-none "Found no notes")
-		 (t (format "Found %d notes" n))))
-	 (shown (cond
-		 (is-none "")
-		 (notdeft-filter-string
-		  (format ", showing %d of them"
-			  (length notdeft-current-files)))
-		 (t ", showing all of them"))))
+	       (is-none (= n 0))
+	       (is-max (and (> notdeft-xapian-max-results 0)
+		                  (= n notdeft-xapian-max-results)))
+	       (found (cond
+		             (is-max (format "Found maximum of %d notes" n))
+		             (is-none "Found no notes")
+		             (t (format "Found %d notes" n))))
+	       (shown (cond
+		             (is-none "")
+		             (notdeft-filter-string
+		              (format ", showing %d of them"
+			                    (length notdeft-current-files)))
+		             (t ", showing all of them"))))
     (message (concat found shown))))
 
 ;;;###autoload
@@ -598,41 +606,41 @@ interactively."
       (message "No NotDeft buffers"))
      ((null (cdr buffers))
       (let ((buf (car buffers)))
-	(if (eq (current-buffer) buf)
-	    (message "No other NotDeft buffers")
-	  (switch-to-buffer buf))))
+	      (if (eq (current-buffer) buf)
+	          (message "No other NotDeft buffers")
+	        (switch-to-buffer buf))))
      (t
       (let* ((choices
-	      (mapcar
-	       (lambda (buf)
-		 (let (query filter)
-		   (with-current-buffer buf
-		     (setq query notdeft-xapian-query
-			   filter notdeft-filter-string))
-		   (format "%s: %s: %s"
-			   (buffer-name buf)
-			   (or query "-")
-			   (or filter "-"))))
-	       buffers))
-	     (chosen (ido-completing-read "Buffer: " choices nil t))
-	     (ix (cl-position chosen choices))
-	     (buffer (nth ix buffers)))
-	(switch-to-buffer buffer))))))
+	            (mapcar
+	             (lambda (buf)
+		             (let (query filter)
+		               (with-current-buffer buf
+		                 (setq query notdeft-xapian-query
+			                     filter notdeft-filter-string))
+		               (format "%s: %s: %s"
+			                     (buffer-name buf)
+			                     (or query "-")
+			                     (or filter "-"))))
+	             buffers))
+	           (chosen (ido-completing-read "Buffer: " choices nil t))
+	           (ix (cl-position chosen choices))
+	           (buffer (nth ix buffers)))
+	      (switch-to-buffer buffer))))))
 
 (defun notdeft-buffer-list ()
   "Return a list of NotDeft buffers.
 That is, behave like `buffer-list', but exclude all non-NotDeft
 buffers."
   (cl-loop for buf in (buffer-list)
-	   if (notdeft-buffer-p buf)
-	   collect buf))
+	         if (notdeft-buffer-p buf)
+	         collect buf))
 
 ;; File list filtering
 
 (defun notdeft-file-newer-p (file1 file2)
   "Whether FILE1 is more recently modified than FILE2."
   (let ((time1 (notdeft-file-mtime file1))
-	(time2 (notdeft-file-mtime file2)))
+	      (time2 (notdeft-file-mtime file2)))
     (time-less-p time2 time1)))
 
 (defun notdeft-sort-files (files)
@@ -647,7 +655,7 @@ Modify the variable `notdeft-current-files' to set the result."
   (if (not notdeft-filter-string)
       (setq notdeft-current-files notdeft-all-files)
     (setq notdeft-current-files
-	  (mapcar #'notdeft-filter-match-file notdeft-all-files))
+	        (mapcar #'notdeft-filter-match-file notdeft-all-files))
     (setq notdeft-current-files (delq nil notdeft-current-files))))
 
 (defun notdeft-filter-match-file (file)
@@ -655,12 +663,12 @@ Modify the variable `notdeft-current-files' to set the result."
 Treat `notdeft-filter-string' as a list of whitespace-separated
 strings and require all elements to match."
   (let ((contents (notdeft-file-contents file))
-	(filter-lst
-	 (mapcar #'regexp-quote (split-string notdeft-filter-string)))
-	(case-fold-search t))
+	      (filter-lst
+	       (mapcar #'regexp-quote (split-string notdeft-filter-string)))
+	      (case-fold-search t))
     (when (cl-every (lambda (filter)
-		      (string-match-p filter contents))
-		    filter-lst)
+		                  (string-match-p filter contents))
+		                filter-lst)
       file)))
 
 (defun notdeft-grep-for-filter ()
@@ -674,14 +682,14 @@ it as a plain string (without query operators). Use
   (let ((s (or notdeft-filter-string notdeft-xapian-query)))
     (when s
       (let ((grep-args
-	     (mapconcat
-	      #'shell-quote-argument
-	      `(,(or (bound-and-true-p grep-program) "grep")
-		"--color" "-nH" "-F" "-i"
-		,(mapconcat #'identity (split-string s) "\n")
-		,@notdeft-current-files)
-	      " ")))
-	(grep grep-args)))))
+	           (mapconcat
+	            #'shell-quote-argument
+	            `(,(or (bound-and-true-p grep-program) "grep")
+		            "--color" "-nH" "-F" "-i"
+		            ,(mapconcat #'identity (split-string s) "\n")
+		            ,@notdeft-current-files)
+	            " ")))
+	      (grep grep-args)))))
 
 ;; Filters that cause a refresh
 
@@ -691,9 +699,9 @@ With a prefix argument PFX, also clear any Xapian query."
   (interactive "P" notdeft-mode)
   (if (and pfx notdeft-xapian-query)
       (progn
-	(setq notdeft-xapian-query nil)
-	(setq notdeft-filter-string nil)
-	(notdeft-changed--query))
+	      (setq notdeft-xapian-query nil)
+	      (setq notdeft-filter-string nil)
+	      (notdeft-changed--query))
     (notdeft-filter nil)))
 
 (defun notdeft-filter (str)
@@ -734,7 +742,7 @@ In particular, update `notdeft-current-files'."
   (interactive nil notdeft-mode)
   (notdeft-filter
    (and (> (length notdeft-filter-string) 1)
-	(substring notdeft-filter-string 0 -1))))
+	      (substring notdeft-filter-string 0 -1))))
 
 (defun notdeft-filter-decrement-word ()
   "Remove last word from the filter, if possible, and update.
@@ -743,12 +751,12 @@ kill ring is not affected."
   (interactive nil notdeft-mode)
   (when notdeft-filter-string
     (let* ((str notdeft-filter-string) ;; store buffer local value
-	   (new-filter
-	    (with-temp-buffer
-	      (insert str)
-	      (goto-char (point-max))
-	      (backward-word)
-	      (buffer-substring-no-properties (point-min) (point)))))
+	         (new-filter
+	          (with-temp-buffer
+	            (insert str)
+	            (goto-char (point-max))
+	            (backward-word)
+	            (buffer-substring-no-properties (point-min) (point)))))
       (notdeft-filter (and (not (equal "" new-filter)) new-filter)))))
 
 (defun notdeft-filter-yank ()
@@ -757,7 +765,7 @@ kill ring is not affected."
   (let ((s (current-kill 0 t)))
     (notdeft-filter
      (if notdeft-filter-string
-	 (concat notdeft-filter-string s)
+	       (concat notdeft-filter-string s)
        s))))
 
 (defun notdeft-complete ()
@@ -785,12 +793,12 @@ show use the selected note FILE, if any."
    notdeft-mode)
   (when file
     (let* ((title (notdeft-file-title file))
-	   (summary (notdeft-file-summary file)))
+	         (summary (notdeft-file-summary file)))
       (message "name=%S file=%S title=%S summary=%S"
-	       (file-name-nondirectory file)
-	       file title
-	       (and summary
-		    (substring summary 0 (min 50 (length summary))))))))
+	             (file-name-nondirectory file)
+	             file title
+	             (and summary
+		                (substring summary 0 (min 50 (length summary))))))))
 
 (defun notdeft-mode-open-file ()
   "Open the selected file, if any."
@@ -825,7 +833,7 @@ setting."
   (interactive
    (let ((prefix current-prefix-arg))
      (list :query (notdeft-xapian-read-query)
-	   :order-by (and (not (equal prefix 1)) 'time)
+	         :order-by (and (not (equal prefix 1)) 'time)
            :new-buffer (funcall (if (equal prefix '(4)) #'not #'identity)
                                 notdeft-open-query-in-new-buffer))))
   (when notdeft-xapian-program
@@ -929,7 +937,7 @@ hook `notdeft-mode-hook'.
   (make-local-variable 'notdeft-buffer-width)
   (make-local-variable 'notdeft-previous-target)
   (add-hook 'window-configuration-change-hook ;; buffer locally
-	    #'notdeft-changed--window nil t)
+	          #'notdeft-changed--window nil t)
   (run-mode-hooks 'notdeft-mode-hook))
 
 (put 'notdeft-mode 'mode-class 'special)
@@ -940,8 +948,8 @@ Name it `notdeft-buffer'. If a NotDeft buffer by that name
 already exists, reuse it, resetting its state. If NEW is non-nil,
 then always create a new buffer."
   (switch-to-buffer (if new
-			(generate-new-buffer notdeft-buffer)
-		      notdeft-buffer))
+			                  (generate-new-buffer notdeft-buffer)
+		                  notdeft-buffer))
   (notdeft-mode))
 
 ;;;###autoload
@@ -953,13 +961,13 @@ create a new buffer, even when a `notdeft-buffer' already exists.
 When called interactively, one prefix argument means NEW, whereas
 two prefix arguments means RESET."
   (interactive (list (equal current-prefix-arg '(16))
-		     (equal current-prefix-arg '(4))))
+		                 (equal current-prefix-arg '(4))))
   (let ((buf (and (not new) (get-buffer notdeft-buffer))))
     (if buf
-	(progn
-	  (switch-to-buffer buf)
-	  (when reset
-	    (notdeft-reset)))
+	      (progn
+	        (switch-to-buffer buf)
+	        (when reset
+	          (notdeft-reset)))
       (notdeft-create-buffer t))
     (notdeft-global-do-pending)
     (when (and notdeft-directory (or (not buf) reset))
@@ -979,19 +987,19 @@ implementation makes assumptions about Deft."
   (when (fboundp 'deft)
     (let ((old-file (notdeft-filename-at-point t)))
       (when old-file
-	(let ((old-dir (notdeft-dcache--strict-managed-file-root
-			(expand-file-name old-file)
-			(notdeft-dcache))))
-	  (if (not old-dir)
-	      (message "Not a NotDeft file: %S" old-file)
-	    (let ((re-init
-		   (and (boundp 'deft-buffer)
-			(get-buffer deft-buffer)
-			(not (equal deft-directory old-dir)))))
-	      (setq deft-directory old-dir)
-	      (deft)
-	      (when re-init
-		(deft-refresh)))))))))
+	      (let ((old-dir (notdeft-dcache--strict-managed-file-root
+			                  (expand-file-name old-file)
+			                  (notdeft-dcache))))
+	        (if (not old-dir)
+	            (message "Not a NotDeft file: %S" old-file)
+	          (let ((re-init
+		               (and (boundp 'deft-buffer)
+			                  (get-buffer deft-buffer)
+			                  (not (equal deft-directory old-dir)))))
+	            (setq deft-directory old-dir)
+	            (deft)
+	            (when re-init
+		            (deft-refresh)))))))))
 
 (provide 'notdeft-mode)
 
