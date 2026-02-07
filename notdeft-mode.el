@@ -391,40 +391,46 @@ into account, but not compositions."
 (defun notdeft-file-widget (file)
   "Add a line to the file browser for the given FILE."
   (let* ((entry (gethash file notdeft-hash-entries))
-	 (title (nth 2 entry))
-	 (summary (nth 3 entry))
-	 (mtime (when notdeft-time-format
-		  (format-time-string notdeft-time-format
-				      (car entry))))
-	 (line-width (- notdeft-buffer-width (notdeft-string-width mtime)))
-	 (path (when notdeft-file-display-function
-		 (funcall notdeft-file-display-function file line-width)))
-	 (path-width (notdeft-string-width path))
-	 (up-to-path-width (- line-width path-width))
-	 (title-width (min up-to-path-width
-			   (notdeft-string-width title)))
-	 (summary-width (min (notdeft-string-width summary)
-			     (- up-to-path-width
-				title-width
-				(length notdeft-separator)))))
+         (title (nth 2 entry))
+         (summary (nth 3 entry))
+         (mtime* (notdeft-string-width-truncate
+                  (when notdeft-time-format
+                    (format-time-string notdeft-time-format
+                                       (car entry)))
+                  notdeft-buffer-width))
+         (line-width (- notdeft-buffer-width (car mtime*)))
+         (path* (notdeft-string-width-truncate
+                 (when notdeft-file-display-function
+                   (funcall notdeft-file-display-function file line-width))
+                 line-width))
+         (up-to-path-width (- line-width (car path*)))
+         (title* (notdeft-string-width-truncate
+                  (or title "[Empty file]")
+                  up-to-path-width))
+         (summary* (notdeft-string-width-truncate
+                    summary
+                    (- up-to-path-width
+                       (car title*)
+                       (length notdeft-separator))))
+         (title (cdr title*))
+         (summary (and (> (car summary*) 0) (cdr summary*)))
+         (path (and (> (car path*) 0) (cdr path*)))
+         (mtime (and (> (car mtime*) 0) (cdr mtime*))))
     (widget-create 'link
-		   :button-prefix ""
-		   :button-suffix ""
-		   :button-face 'notdeft-title-face
-		   :format "%[%v%]"
-		   :tag file
-		   :help-echo "Edit this file"
-		   :notify (lambda (widget &rest _ignore)
-			     (notdeft-find-file (widget-get widget :tag)))
-		   (if title
-		       (truncate-string-to-width title title-width)
-		     "[Empty file]"))
-    (when (> summary-width 0)
+                   :button-prefix ""
+                   :button-suffix ""
+                   :button-face 'notdeft-title-face
+                   :format "%[%v%]"
+                   :tag file
+                   :help-echo "Edit this file"
+                   :notify (lambda (widget &rest _ignore)
+                             (notdeft-find-file (widget-get widget :tag)))
+                   title)
+    (when summary
       (widget-insert
        (propertize notdeft-separator 'face 'notdeft-separator-face))
       (widget-insert
-       (propertize (truncate-string-to-width summary summary-width)
-		   'face 'notdeft-summary-face)))
+       (propertize summary 'face 'notdeft-summary-face)))
     (when (or path mtime)
       (while (< (current-column) up-to-path-width)
 	(widget-insert " ")))
