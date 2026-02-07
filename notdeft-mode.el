@@ -384,11 +384,17 @@ into account, but not compositions."
                     i (1+ i)))))
         (cons width (or res str))))))
 
+(defmacro notdeft-non-zero-string (pair)
+  "Extract non-empty string from PAIR, or nil.
+PAIR is expected to evaluate to a result like those returned by
+`notdeft-string-width-truncate'."
+  (let ((x (gensym "p")))
+    `(let ((,x ,pair))
+       (and (> (car ,x) 0) (cdr ,x)))))
+
 (defun notdeft-file-widget (file)
   "Add a line to the file browser for the given FILE."
   (let* ((entry (gethash file notdeft-hash-entries))
-         (title (nth 2 entry))
-         (summary (nth 3 entry))
          (mtime* (notdeft-string-width-truncate
                   (when notdeft-time-format
                     (format-time-string notdeft-time-format
@@ -401,17 +407,17 @@ into account, but not compositions."
                  line-width))
          (up-to-path-width (- line-width (car path*)))
          (title* (notdeft-string-width-truncate
-                  (or title "[Empty file]")
+                  (or (nth 2 entry) "[Empty file]")
                   up-to-path-width))
-         (summary* (notdeft-string-width-truncate
-                    summary
+         (mtime (notdeft-non-zero-string mtime*))
+         (path (notdeft-non-zero-string path*))
+         (title (cdr title*))
+         (summary (notdeft-non-zero-string
+                   (notdeft-string-width-truncate
+                    (nth 3 entry)
                     (- up-to-path-width
                        (car title*)
-                       (length notdeft-separator))))
-         (title (cdr title*))
-         (summary (and (> (car summary*) 0) (cdr summary*)))
-         (path (and (> (car path*) 0) (cdr path*)))
-         (mtime (and (> (car mtime*) 0) (cdr mtime*))))
+                       (length notdeft-separator))))))
     (widget-create 'link
                    :button-prefix ""
                    :button-suffix ""
