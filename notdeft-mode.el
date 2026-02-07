@@ -358,10 +358,6 @@ information."
     (goto-char (point-min))
     (forward-line (1- line))))
 
-(defun notdeft-string-width (str)
-  "Like `string-width', but return 0 if STR is nil."
-  (if str (string-width str) 0))
-
 (defun notdeft-string-width-truncate (str limit)
   "Truncate STR to LIMIT width or less.
 Return truncated (WIDTH . STRING). Truncate similarly to
