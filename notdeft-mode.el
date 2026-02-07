@@ -362,6 +362,32 @@ information."
   "Like `string-width', but return 0 if STR is nil."
   (if str (string-width str) 0))
 
+(defun notdeft-string-width-truncate (str limit)
+  "Truncate STR to LIMIT width or less.
+Return truncated (WIDTH . STRING). Truncate similarly to
+`truncate-string-to-width', so that individual `char-width's are taken
+into account, but not compositions."
+  (if (or (not str) (<= limit 0))
+      '(0 . "")
+    (if (not (multibyte-string-p str))
+        (let ((len (length str)))
+          (if (> len limit)
+              (cons limit (substring str 0 limit))
+            (cons len str)))
+      (let ((i 0)
+            (end (length str))
+            (width 0)
+            (res nil))
+        (while (and (not res) (< i end))
+          (let* ((ch (aref str i))
+                 (cw (char-width ch))
+                 (width+cw (+ width cw)))
+            (if (> width+cw limit)
+                (setq res (substring str 0 i))
+              (setq width width+cw
+                    i (1+ i)))))
+        (cons width (or res str))))))
+
 (defun notdeft-file-widget (file)
   "Add a line to the file browser for the given FILE."
   (let* ((entry (gethash file notdeft-hash-entries))
